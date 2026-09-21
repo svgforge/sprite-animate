@@ -22,12 +22,12 @@ Component** (`<svg-morph>`), built with **GSAP MorphSVGPlugin** + **RSBuild**
 
 | Command                  | Purpose                                                      |
 | ------------------------ | ------------------------------------------------------------ |
-| `npm run dev`            | Runs `build:lib`, then starts the RSBuild dev server (default :3000; port often taken → 3001/3002 …, read from the log) |
-| `npm run build`          | Demo entries + release bundle (`dist/lib/svg-morph.js`)      |
-| `npm run build:lib`      | Standalone release bundle only (UMD, minified)               |
-| `npm run preview`        | Serve the build locally                                      |
-| `npm run lint` / `npm run lint:fix` | Biome check / auto-fix                            |
-| `npm run format`         | Biome format                                                 |
+| `pnpm run dev`            | Runs `build:lib`, then starts the RSBuild dev server (default :3000; port often taken → 3001/3002 …, read from the log) |
+| `pnpm run build`          | Demo entries + release bundle (`dist/lib/svg-morph.js`)      |
+| `pnpm run build:lib`      | Standalone release bundle only (UMD, minified)               |
+| `pnpm run preview`        | Serve the build locally                                      |
+| `pnpm run lint` / `pnpm run lint:fix` | Biome check / auto-fix                            |
+| `pnpm run format`         | Biome format                                                 |
 | `npx tsc --noEmit`       | Type-check (before/after changes to `src/`)                  |
 
 ## Architecture / structure
@@ -60,7 +60,7 @@ Component** (`<svg-morph>`), built with **GSAP MorphSVGPlugin** + **RSBuild**
 
 ## Biome / conventions
 
-- After changes to `src/` or `public/css/` ALWAYS run `npm run lint` and fix
+- After changes to `src/` or `public/css/` ALWAYS run `pnpm run lint` and fix
   errors (`×`) — only warnings/infos may remain.
 - `biome.json`: template HTML excluded; `noSvgWithoutTitle` disabled for
   `public/sprite.svg` (symbol sprite, not standalone icons).

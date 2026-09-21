@@ -1,0 +1,8 @@
+# sprite-amimate is its own pnpm workspace root (not part of the parent
+# svgforge-workspace workspace), so it keeps its own pnpm-lock.yaml inside
+# this repository for reproducible CI installs.
+packages: []
+
+# core-js (transitive dependency of @rsbuild/core) has a build script.
+allowBuilds:
+  core-js: true

@@ -11,13 +11,13 @@ without writing a single line of JavaScript.
 ## Quick start
 
 ```bash
-npm install
-npm run dev        # Dev server on http://localhost:3000 (demo page at /demo)
-npm run build      # Production build to dist/
-npm run preview    # Serve the build locally
+pnpm install
+pnpm run dev        # Dev server on http://localhost:3000 (demo page at /demo)
+pnpm run build      # Production build to dist/
+pnpm run preview    # Serve the build locally
 ```
 
-`npm run lint` / `npm run lint:fix` checks or auto-fixes (Biome), `npm run format`
+`pnpm run lint` / `pnpm run lint:fix` checks or auto-fixes (Biome), `pnpm run format`
 formats the project.
 
 ---
@@ -149,7 +149,7 @@ Access by ID:
 
 ## Release build: embedding in third-party pages
 
-In addition to the demo, `npm run build` produces a **standalone, minified
+In addition to the demo, `pnpm run build` produces a **standalone, minified
 bundle**: `dist/lib/svg-morph.js` (≈ 99 kB, ≈ 39 kB gzip). It contains
 everything (GSAP + MorphSVGPlugin) in a single file — no bundler required.
 
