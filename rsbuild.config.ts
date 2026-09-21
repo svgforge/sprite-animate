@@ -43,6 +43,10 @@ export default defineConfig({
     distPath: {
       root: "dist",
     },
+    // Emit relative asset URLs (./static/js/..., ./css/...) so the build also
+    // works when hosted under a subpath, e.g. GitHub Pages project sites
+    // (https://user.github.io/sprite-animate/).
+    assetPrefix: "auto",
   },
 
   server: {
