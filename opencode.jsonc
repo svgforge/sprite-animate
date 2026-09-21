@@ -1,0 +1,68 @@
+{
+  // OpenCode-Projekteinstellungen für dieses Workspace (sprite-amimate).
+  //
+  // Rechte werden als GEORDNETE Regeln vergeben — die LETZTE passende Regel
+  // gewinnt. Deshalb steht die breite "fragen"-Regel für Shell ganz oben,
+  // und die konkreten Erlaubnisse stehen DANACH und überschreiben sie.
+  //
+  // effect:
+  //   "allow" = automatisch erlauben (ohne Nachfrage)
+  //   "deny"  = blockieren
+  //   "ask"   = jedes Mal nachfragen (Standard, wenn keine Regel passt)
+  //
+  // Zum Anpassen einfach Regeln ergänzen/ändern — z. B. git push auf "allow"
+  // stellen, wenn du das Pushen freigeben willst.
+
+  "$schema": "https://opencode.ai/config.json",
+
+  "permissions": [
+    // ------------------ Projektdateien: lesen/schreiben frei ------------------
+    { "action": "read", "resource": "*", "effect": "allow" },
+    { "action": "edit", "resource": "*", "effect": "allow" },
+    { "action": "glob", "resource": "*", "effect": "allow" },
+    { "action": "grep", "resource": "*", "effect": "allow" },
+
+    // ------------------ Shell: Standard = nachfragen -------------------------
+    // Wichtig: Muss VOR den Erlaubnissen stehen, damit die allows "gewinnen".
+    { "action": "shell", "resource": "*", "effect": "ask" },
+
+    // ------------------ Paket-Manager / Dev-Befehle --------------------------
+    { "action": "shell", "resource": "npm *", "effect": "allow" },
+    { "action": "shell", "resource": "npx *", "effect": "allow" },
+    { "action": "shell", "resource": "node *", "effect": "allow" },
+    { "action": "shell", "resource": "pnpm *", "effect": "allow" },
+
+    // ------------------ Git: lesende/lokale Aktionen ------------------------
+    { "action": "shell", "resource": "git status *", "effect": "allow" },
+    { "action": "shell", "resource": "git diff *", "effect": "allow" },
+    { "action": "shell", "resource": "git log *", "effect": "allow" },
+    { "action": "shell", "resource": "git add *", "effect": "allow" },
+    { "action": "shell", "resource": "git commit *", "effect": "allow" },
+    { "action": "shell", "resource": "git branch *", "effect": "allow" },
+    { "action": "shell", "resource": "git checkout *", "effect": "allow" },
+
+    // ------------------ Sicherheit: gefährliche Aktionen nachfragen ----------
+    { "action": "shell", "resource": "git push *", "effect": "ask" },
+    { "action": "shell", "resource": "git reset --hard *", "effect": "ask" },
+    { "action": "shell", "resource": "git clean *", "effect": "ask" },
+    { "action": "shell", "resource": "rm -rf *", "effect": "ask" },
+    { "action": "shell", "resource": "sudo *", "effect": "ask" },
+
+    // ------------------ Secrets / Umgebungsdateien ---------------------------
+    { "action": "read", "resource": "*.env", "effect": "ask" },
+    { "action": "read", "resource": "*.env.*", "effect": "ask" },
+
+    // ------------------ Außerhalb des Workspace ------------------------------
+    // /tmp/opencode ist der approved Temp-Ablageort dieses Workspace.
+    // external_directory braucht begleitende read/edit-Regeln:
+    { "action": "external_directory", "resource": "/tmp/opencode/*", "effect": "allow" },
+    { "action": "read", "resource": "/tmp/opencode/*", "effect": "allow" },
+    { "action": "edit", "resource": "/tmp/opencode/*", "effect": "allow" },
+    // Alles andere außerhalb: nachfragen
+    { "action": "external_directory", "resource": "*", "effect": "ask" },
+
+    // ------------------ Skills / Sub-Agents ----------------------------------
+    { "action": "skill", "resource": "*", "effect": "ask" },
+    { "action": "subagent", "resource": "*", "effect": "ask" }
+  ]
+}

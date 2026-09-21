@@ -1,0 +1,36 @@
+{
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "biomejs.biome",
+  "[typescript]": {
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
+  },
+  "[json]": {
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
+  },
+  "[html]": {
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
+  },
+  "[css]": {
+    "editor.defaultFormatter": "biomejs.biome",
+    "editor.formatOnSave": true
+  },
+  "biome.lspBin": "./node_modules/@biomejs/biome/bin/biome",
+  // RSBuild-Partials verwenden EJS-Syntax (<%= … %>). Als reines HTML gemeldet
+  // sie die Template-Delimiters als Fehler. Wir mappen sie auf dieselbe
+  // Behandlung wie .ejs-Dateien, damit keine HTML-Lint-Fehler mehr erscheinen.
+  "files.associations": {
+    "public/*.html": "ejs",
+    "templates/*.html": "ejs"
+  }
+}

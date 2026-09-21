@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>svg-morph embed example</title>
+    <style>
+    body {
+      font-family: system-ui, sans-serif;
+      background: #1a1a2e;
+      color: #eee;
+      padding: 2rem;
+    }
+    .row {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    </style>
+  </head>
+  <body>
+    <h1>&lt;svg-morph&gt; embedded (release build)</h1>
+    <p>
+      This page uses <code>dist/lib/svg-morph.js</code> from the release build — no bundler, no
+      framework, just a &lt;script&gt; tag.
+    </p>
+    <div class="row">
+      <svg-morph
+        sprite-href="/sprite.svg"
+        icons="arrow_forward,check"
+        width="180"
+        height="180"
+      ></svg-morph>
+      <svg-morph
+        sprite-href="/sprite.svg"
+        icons="arrow_forward,check"
+        width="180"
+        height="180"
+        speed="2"
+        type="rotational"
+        hold="0.4"
+        fill="#4ecdc4"
+      ></svg-morph>
+      <svg-morph
+        sprite-href="/sprite.svg"
+        icons="all"
+        width="180"
+        height="180"
+        autoplay="false"
+        id="manual"
+      ></svg-morph>
+    </div>
+    <p>
+      <button type="button" onclick="document.getElementById('manual').play()">Play</button>
+      <button type="button" onclick="document.getElementById('manual').goTo('woman')">
+        GoTo woman
+      </button>
+    </p>
+    <!-- Embedding: one file, registers the custom element on load -->
+    <script src="/dist/lib/svg-morph.js"></script>
+  </body>
+</html>

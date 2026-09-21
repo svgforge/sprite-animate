@@ -1,0 +1,25 @@
+{
+  "name": "sprite-amimate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "npm run build:lib && rsbuild dev",
+    "build": "rsbuild build && rsbuild build --config rsbuild.lib.config.ts",
+    "preview": "rsbuild preview",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
+    "format": "biome format --write .",
+    "build:lib": "rsbuild build --config rsbuild.lib.config.ts",
+    "release": "npm run build"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.14",
+    "@rsbuild/core": "^1.7.6",
+    "@types/node": "^26.6.2",
+    "typescript": "^5.6.2"
+  },
+  "dependencies": {
+    "gsap": "^3.15.0"
+  }
+}

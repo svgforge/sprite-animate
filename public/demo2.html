@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>svg-morph — Defaults</title>
+    <link rel="stylesheet" href="/css/shared.css">
+    <style>
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .hero-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+    .hero-card h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .hero-card code {
+      background: rgba(0, 0, 0, 0.3);
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      word-break: break-all;
+    }
+    .links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    </style>
+  </head>
+  <body>
+    <%= headerPartial %>
+
+    <main class="page">
+      <div class="page-title">
+        <h1>Defaults</h1>
+        <p>Large component with all default animation parameters</p>
+      </div>
+
+      <div class="hero">
+        <div class="hero-card">
+          <h2>Complete sprite, defaults</h2>
+          <!-- Nur sprite-href gesetzt: alle anderen Parameter nutzen die Defaults -->
+          <svg-morph
+            id="hero-morph"
+            sprite-href="/sprite.svg"
+          ></svg-morph>
+        </div>
+
+      </div>
+    </main>
+
+    <%= footerPartial %>
+  </body>
+</html>
