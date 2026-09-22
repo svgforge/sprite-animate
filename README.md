@@ -176,7 +176,7 @@ manual with JS API).
 
 ```
 └─ dist/
-   ├─ index.html, demo.html, demo2.html, static/   # Demo build
+   ├─ index.html, demo.html, demo2.html, demo3.html, static/   # Demo build
    └─ lib/
       └─ svg-morph.js                              # Standalone release bundle
 ```
@@ -190,12 +190,16 @@ manual with JS API).
 │   ├── svg-morph.ts        # The <svg-morph> Web Component
 │   ├── demo.ts             # Builds the demo page dynamically from the sprite
 │   ├── demo2.ts            # Second demo page
+│   ├── demo3.ts            # Pattern Studio page (7 seamless pattern families)
+│   ├── patterns.ts         # Seamless pattern generators used by demo3
+│   ├── presets.ts          # Preset serialization / validation (used by demo3)
 │   └── index.ts            # Landing page
 ├── public/
 │   ├── sprite.svg          # Any number of <symbol> icons
 │   ├── index.html          # Landing page template
 │   ├── demo.html           # Demo page template
 │   ├── demo2.html          # Second demo page template
+│   ├── demo3.html          # Pattern Studio page template
 │   └── css/shared.css      # Shared stylesheet
 ├── templates/
 │   ├── header.html         # Shared header partial (injected via templateParameters)

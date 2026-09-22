@@ -18,6 +18,7 @@ export default defineConfig({
       index: "./src/index.ts",
       demo: "./src/demo.ts",
       demo2: "./src/demo2.ts",
+      demo3: "./src/demo3.ts",
     },
   },
 
@@ -33,7 +34,8 @@ export default defineConfig({
       headerPartial: headerPartial
         .replaceAll("__HOME_ACTIVE__", entryName === "index" ? 'aria-current="page"' : "")
         .replaceAll("__DEMO_ACTIVE__", entryName === "demo" ? 'aria-current="page"' : "")
-        .replaceAll("__DEMO2_ACTIVE__", entryName === "demo2" ? 'aria-current="page"' : ""),
+        .replaceAll("__DEMO2_ACTIVE__", entryName === "demo2" ? 'aria-current="page"' : "")
+        .replaceAll("__DEMO3_ACTIVE__", entryName === "demo3" ? 'aria-current="page"' : ""),
       footerPartial,
     }),
   },

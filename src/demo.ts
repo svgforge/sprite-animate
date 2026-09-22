@@ -145,7 +145,11 @@ async function buildDemo(): Promise<void> {
       description: "Custom duration and easing",
       icons: pickIcons(icons, 3),
       attributes: { duration: "5", ease: "elastic.out(1, 0.5)", fill: "#4ecdc4" },
-      note: markupNote(pickIcons(icons, 3), { duration: "5", ease: "elastic.out(1, 0.5)", fill: "#4ecdc4" }),
+      note: markupNote(pickIcons(icons, 3), {
+        duration: "5",
+        ease: "elastic.out(1, 0.5)",
+        fill: "#4ecdc4",
+      }),
     },
     {
       title: "Manual Control (no autoplay)",

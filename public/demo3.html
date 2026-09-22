@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>svg-morph — Pattern Studio</title>
+    <link rel="stylesheet" href="./css/shared.css">
+    <style>
+    .pattern-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.9;
+    }
+    .pattern-bg svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      /* Combine filters so any palette renders vivid and deep: boost color
+         saturation, lift brightness and keep contrast punchy. */
+      filter: saturate(1.35) contrast(1.06) brightness(1.06);
+    }
+    .pattern-bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      /* Soft vignette: draws attention to the middle and lets the dialog and
+         text stay readable no matter how bright or busy the pattern is. */
+      background: radial-gradient(
+        120% 95% at 50% 22%,
+        rgba(10, 10, 20, 0) 35%,
+        rgba(10, 10, 20, 0.55) 100%
+      );
+      pointer-events: none;
+    }
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+    }
+    .control-card {
+      /* A layered backdrop makes the dialog readable over any pattern: the
+         gradient tints the card, the backdrop-filter blurs and saturates the
+         pattern behind it, and the accent border follows the current hue. */
+      background: linear-gradient(165deg, rgba(18, 18, 31, 0.72), rgba(18, 18, 31, 0.45));
+      border: 1px solid var(--border);
+      border-color: color-mix(in srgb, var(--pattern-accent, #00d4ff) 40%, var(--border));
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      max-width: 560px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      backdrop-filter: blur(16px) saturate(1.5);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+    .control-card h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--pattern-accent, var(--accent));
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+    .seed-row {
+      display: flex;
+      gap: 0.75rem;
+      align-items: center;
+    }
+    .seed-row input[type="number"] {
+      flex: 1;
+      min-width: 0;
+    }
+    .field {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.4rem 0.75rem;
+      align-items: center;
+    }
+    .field label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .field select {
+      grid-column: 1 / -1;
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.5rem;
+      font-size: 0.85rem;
+      width: 100%;
+    }
+    .family-desc {
+      margin: -0.5rem 0 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .preset-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      border-top: 1px solid var(--border);
+      padding-top: 1.25rem;
+    }
+    .preset-row {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .preset-row input[type="text"] {
+      flex: 1;
+      min-width: 0;
+    }
+    .preset-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+    .preset-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.3rem 0.5rem;
+    }
+    .preset-item.active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .preset-name-btn {
+      flex: 1;
+      text-align: left;
+      background: none;
+      border: none;
+      color: var(--text);
+      font-size: 0.85rem;
+      padding: 0.15rem 0;
+      cursor: pointer;
+    }
+    .preset-name-btn:hover {
+      color: var(--accent);
+    }
+    .preset-delete {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      padding: 0.15rem 0.3rem;
+      cursor: pointer;
+    }
+    .preset-delete:hover {
+      color: #ff6b6b;
+    }
+    .preset-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+    .preset-status {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .field output {
+      font-size: 0.85rem;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+    .field input[type="range"] {
+      grid-column: 1 / -1;
+      width: 100%;
+      accent-color: var(--accent);
+    }
+    input[type="number"],
+    input[type="range"],
+    button {
+      accent-color: var(--accent);
+    }
+    button {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(0, 212, 255, 0.4);
+      border-radius: 6px;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    button:hover {
+      background: var(--surface-hover);
+    }
+    input[type="number"] {
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.5rem;
+      font-size: 0.85rem;
+    }
+    .page-title {
+      text-align: center;
+    }
+    </style>
+  </head>
+  <body>
+    <%= headerPartial %>
+
+    <div class="pattern-bg" id="pattern-bg" aria-hidden="true"></div>
+
+    <main class="page">
+      <div class="hero">
+        <div class="page-title">
+          <h1>Pattern Studio</h1>
+          <p>Seamless SVG patterns as a live background — pick a family, a seed and tweak the sliders</p>
+        </div>
+
+        <div class="control-card">
+          <h2>Controls</h2>
+
+          <div class="field">
+            <label for="pattern">Pattern</label>
+            <select id="pattern" aria-label="Pattern family"></select>
+          </div>
+          <p class="family-desc" id="family-desc"></p>
+
+          <div class="seed-row">
+            <input type="number" id="seed" min="0" step="1" aria-label="Pattern seed">
+            <button type="button" id="seed-random">🎲 Random seed</button>
+          </div>
+
+          <div class="field">
+            <label for="count" id="density-label">Shapes per tile</label>
+            <output id="count-readout" for="count"></output>
+            <input type="range" id="count" min="1" max="120" step="1">
+          </div>
+
+          <div class="field">
+            <label for="size">Tile size</label>
+            <output id="size-readout" for="size"></output>
+            <input type="range" id="size" min="40" max="400" step="10">
+          </div>
+
+          <div class="field">
+            <label for="opacity">Opacity</label>
+            <output id="opacity-readout" for="opacity"></output>
+            <input type="range" id="opacity" min="0.1" max="1" step="0.05">
+          </div>
+
+          <div class="field">
+            <label for="colors">Colors</label>
+            <output id="colors-readout" for="colors"></output>
+            <input type="range" id="colors" min="1" max="8" step="1">
+          </div>
+
+          <div class="field">
+            <label for="hue">Hue</label>
+            <output id="hue-readout" for="hue"></output>
+            <input type="range" id="hue" min="0" max="360" step="1">
+          </div>
+
+          <div class="field">
+            <label for="rotation">Rotation</label>
+            <output id="rotation-readout" for="rotation"></output>
+            <input type="range" id="rotation" min="0" max="360" step="1">
+          </div>
+
+          <div class="preset-block">
+            <h2>Pattern file</h2>
+            <div class="preset-actions">
+              <button type="button" id="pattern-download">Download SVG</button>
+              <button type="button" id="pattern-copy">Copy SVG</button>
+            </div>
+            <p class="preset-status" id="pattern-file-status" hidden></p>
+          </div>
+
+          <div class="preset-block">
+            <h2>Presets</h2>
+            <div class="preset-row">
+              <input type="text" id="preset-name" placeholder="Preset name" aria-label="Preset name">
+              <button type="button" id="preset-save">Save</button>
+            </div>
+            <div class="preset-list" id="preset-list"></div>
+            <div class="preset-actions">
+              <button type="button" id="preset-export">Export</button>
+              <button type="button" id="preset-import">Import</button>
+              <input type="file" id="preset-file" accept="application/json,.json" hidden>
+            </div>
+            <p class="preset-status" id="preset-status" hidden></p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <%= footerPartial %>
+  </body>
+</html>
