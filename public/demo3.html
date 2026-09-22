@@ -7,7 +7,9 @@
     <link rel="stylesheet" href="./css/shared.css">
     <style>
     .pattern-bg {
-      position: fixed;
+      /* The pattern is the normal page background: it scrolls with the
+         content. Only the header stays fixed on top. */
+      position: absolute;
       inset: 0;
       z-index: -1;
       opacity: 0.9;
