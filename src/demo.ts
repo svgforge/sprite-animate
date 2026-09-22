@@ -41,9 +41,18 @@ function pickIcons(icons: readonly string[], count: number): string[] {
   return result;
 }
 
-// Show the actual icon IDs used, e.g. icons="id1,id2,id3".
-function iconsNote(icons: string[]): string {
-  return `icons="${icons.join(",")}"`;
+// Render the complete <svg-morph> element for a card from its icon selection
+// and extra attributes, so the code block below always shows valid HTML the
+// user can copy.
+function markupNote(icons: string[] | null, attributes: Record<string, string>): string {
+  const parts: string[] = [`sprite-href="${SPRITE_HREF}"`];
+  if (icons) {
+    parts.push(`icons="${icons.join(",")}"`);
+  }
+  for (const [name, value] of Object.entries(attributes)) {
+    parts.push(`${name}="${value}"`);
+  }
+  return `<svg-morph ${parts.join(" ")}></svg-morph>`;
 }
 
 function createButton(
@@ -129,42 +138,42 @@ async function buildDemo(): Promise<void> {
       description: "Comma-separated list of symbol IDs",
       icons: allIcons,
       attributes: { fill: "#ff6b6b" },
-      note: iconsNote(allIcons),
+      note: markupNote(allIcons, { fill: "#ff6b6b" }),
     },
     {
       title: "Slow Morph (5s)",
       description: "Custom duration and easing",
       icons: pickIcons(icons, 3),
       attributes: { duration: "5", ease: "elastic.out(1, 0.5)", fill: "#4ecdc4" },
-      note: `duration="5" ease="elastic.out(1, 0.5)" ${iconsNote(pickIcons(icons, 3))}`,
+      note: markupNote(pickIcons(icons, 3), { duration: "5", ease: "elastic.out(1, 0.5)", fill: "#4ecdc4" }),
     },
     {
       title: "Manual Control (no autoplay)",
       description: "Use built-in controls or JS API",
       icons: allIcons,
       attributes: { autoplay: "false", fill: "#ffe66d" },
-      note: `autoplay="false" ${iconsNote(allIcons)}`,
+      note: markupNote(allIcons, { autoplay: "false", fill: "#ffe66d" }),
     },
     {
       title: "Reverse Direction",
       description: "Morphs backwards through icons",
       icons: allIcons,
       attributes: { direction: "reverse", fill: "#a855f7" },
-      note: `direction="reverse" ${iconsNote(allIcons)}`,
+      note: markupNote(allIcons, { direction: "reverse", fill: "#a855f7" }),
     },
     {
       title: "Start Index",
       description: "Begin from 3rd icon",
       icons: pickIcons(icons, 5),
       attributes: { "start-index": "2", fill: "#f97316" },
-      note: `start-index="2" ${iconsNote(pickIcons(icons, 5))}`,
+      note: markupNote(pickIcons(icons, 5), { "start-index": "2", fill: "#f97316" }),
     },
     {
       title: "Dynamic Attributes",
       description: "Change fill, duration via JS",
       icons: allIcons,
       attributes: {},
-      note: `setAttribute('fill', ...) ${iconsNote(allIcons)}`,
+      note: `${markupNote(allIcons, {})}\n// morph.setAttribute("fill", "#7fdbca")`,
       buttons: [
         {
           label: "Random Color",
@@ -186,7 +195,7 @@ async function buildDemo(): Promise<void> {
       description: "Control via attributes: speed, morph type, hold pause",
       icons: allIcons,
       attributes: { autoplay: "false", fill: "#7c9cff" },
-      note: `speed= duration= type= hold= paused=`,
+      note: `${markupNote(allIcons, { autoplay: "false", fill: "#7c9cff" })}\n// morph.setAttribute("speed", "2")`,
       buttons: [
         { label: "slow 0.25x", action: (morph) => morph.setAttribute("speed", "0.25") },
         { label: "0.5x", action: (morph) => morph.setAttribute("speed", "0.5") },
@@ -203,11 +212,10 @@ async function buildDemo(): Promise<void> {
     },
     {
       title: "JS API Control",
-
       description: "Programmatic control: play, pause, goTo()",
       icons: allIcons,
       attributes: { autoplay: "false", fill: "#06b6d4" },
-      note: `.play() .pause() .next() .prev() .goTo() .getCurrentIcon() ${iconsNote(allIcons)}`,
+      note: `${markupNote(allIcons, { autoplay: "false", fill: "#06b6d4" })}\n// morph.play(); morph.goTo("check")`,
       buttons: [
         { label: "Play", action: (morph) => morph.play() },
         { label: "Pause", action: (morph) => morph.pause() },
