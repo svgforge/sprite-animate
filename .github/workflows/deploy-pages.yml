@@ -35,6 +35,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # public/ico.svg and public/ico.html are generated and gitignored, so
+      # every build has to create them from src/icons/ before the bundle is
+      # assembled — the <svg-morph> demos fetch the sprite at runtime.
+      - name: Build icon sprite
+        run: pnpm run icons
+
       - name: Build
         run: pnpm run build
 
