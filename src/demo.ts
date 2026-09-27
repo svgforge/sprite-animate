@@ -4,7 +4,9 @@ import "./svg-morph";
 
 // The sprite is read at runtime: swapping ico.svg in public/ is enough,
 // this demo page then adapts automatically to whatever symbols it contains.
-const SPRITE_HREF = "/ico.svg";
+// The path is relative on purpose: on GitHub Pages the pages are served from a
+// sub-path, where an absolute "/ico.svg" would point past the project.
+const SPRITE_HREF = "./ico.svg";
 
 interface CardButton {
   label: string;
@@ -131,7 +133,7 @@ async function buildDemo(): Promise<void> {
       description: "Loads all symbols from sprite, morphs continuously",
       icons: null,
       attributes: {},
-      note: `<svg-morph sprite-href="/ico.svg"></svg-morph>`,
+      note: `<svg-morph sprite-href="./ico.svg"></svg-morph>`,
     },
     {
       title: "Specific Icons Only",
