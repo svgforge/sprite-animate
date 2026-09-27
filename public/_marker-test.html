@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Marker tile test</title>
+    <link rel="stylesheet" href="./css/marker-heading.css">
+    <style>
+      body {
+        margin: 0;
+        padding: 60px;
+        background: #111;
+      }
+
+      /* The page only needs the heading classes - the band itself is a
+         ::before in css/marker-heading.css, there is no band markup. */
+      .test-heading {
+        display: inline-block;
+        width: 1200px;
+        color: #000;
+        --marker-color: #ffffff;
+        --marker-opacity: 1;
+      }
+      .short {
+        width: 300px;
+      }
+      .tinted {
+        --marker-color: #f6dc55;
+        --marker-opacity: 0.7;
+      }
+      .tilted {
+        --marker-stroke-tilt: 1deg;
+      }
+      .spacer {
+        height: 120px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1 class="marker-heading test-heading">
+      <span class="heading-text">WIDE LINE TILE CHECK</span>
+    </h1>
+
+    <div class="spacer"></div>
+
+    <h1 class="marker-heading test-heading short">
+      <span class="heading-text">SHORT</span>
+    </h1>
+
+    <div class="spacer"></div>
+
+    <h1 class="marker-heading test-heading tinted">
+      <span class="heading-text">TINTED AND TRANSPARENT</span>
+    </h1>
+
+    <div class="spacer"></div>
+
+    <h1 class="marker-heading test-heading tilted">
+      <span class="heading-text">TILTED LINE CHECK</span>
+    </h1>
+  </body>
+</html>

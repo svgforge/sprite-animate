@@ -31,7 +31,7 @@
   },
   "overrides": [
     {
-      "includes": ["public/sprite.svg"],
+      "includes": ["public/ico.svg"],
       "linter": {
         "rules": {
           "a11y": {

@@ -28,7 +28,7 @@ A single morph instance:
 
 ```html
 <svg-morph
-  sprite-href="/sprite.svg"
+  sprite-href="/ico.svg"
   icons="arrow_forward,check"
   width="200"
   height="200"
@@ -66,7 +66,7 @@ The built-in control buttons are **hidden by default** — they only appear belo
 the morph with `controls` (or `controls="true"`).
 
 ```html
-<svg-morph sprite-href="/sprite.svg" controls></svg-morph>
+<svg-morph sprite-href="/ico.svg" controls></svg-morph>
 ```
 
 ### Methods (JS API)
@@ -83,7 +83,7 @@ the morph with `controls` (or `controls="true"`).
 Access by ID:
 
 ```html
-<svg-morph id="demo" sprite-href="/sprite.svg" autoplay="false"></svg-morph>
+<svg-morph id="demo" sprite-href="/ico.svg" autoplay="false"></svg-morph>
 
 <script>
   const morph = document.getElementById("demo");
@@ -100,14 +100,14 @@ Access by ID:
 ### 1. Basic — all icons, auto-play
 
 ```html
-<svg-morph sprite-href="/sprite.svg" width="200" height="200"></svg-morph>
+<svg-morph sprite-href="/ico.svg" width="200" height="200"></svg-morph>
 ```
 
 ### 2. Specific icons only, slower, different color
 
 ```html
 <svg-morph
-  sprite-href="/sprite.svg"
+  sprite-href="/ico.svg"
   icons="arrow_forward,check,planner_review"
   duration="5"
   fill="#4ecdc4"
@@ -118,7 +118,7 @@ Access by ID:
 
 ```html
 <svg-morph
-  sprite-href="/sprite.svg"
+  sprite-href="/ico.svg"
   icons="arrow_forward,check"
   speed="2"
   type="rotational"
@@ -129,7 +129,7 @@ Access by ID:
 ### 4. Manual control (no autoplay)
 
 ```html
-<svg-morph id="m" sprite-href="/sprite.svg" autoplay="false"></svg-morph>
+<svg-morph id="m" sprite-href="/ico.svg" autoplay="false"></svg-morph>
 <button onclick="document.getElementById('m').play()">Play</button>
 <button onclick="document.getElementById('m').next()">Next</button>
 ```
@@ -137,7 +137,7 @@ Access by ID:
 ### 5. Changing the speed live
 
 ```html
-<svg-morph id="g" sprite-href="/sprite.svg" speed="1"></svg-morph>
+<svg-morph id="g" sprite-href="/ico.svg" speed="1"></svg-morph>
 <script>
   const g = document.getElementById("g");
   g.setAttribute("speed", "0.25"); // slow motion
@@ -159,7 +159,7 @@ Include it in any HTML page:
 <!-- One file is enough: registers <svg-morph> on load -->
 <script src="/path/to/svg-morph.js"></script>
 
-<svg-morph sprite-href="/sprite.svg" icons="arrow_forward,check"></svg-morph>
+<svg-morph sprite-href="/ico.svg" icons="arrow_forward,check"></svg-morph>
 ```
 
 The bundle is built as **UMD**:
@@ -195,7 +195,7 @@ manual with JS API).
 │   ├── presets.ts          # Preset serialization / validation (used by demo3)
 │   └── index.ts            # Landing page
 ├── public/
-│   ├── sprite.svg          # Any number of <symbol> icons
+│   ├── ico.svg          # Any number of <symbol> icons
 │   ├── index.html          # Landing page template
 │   ├── demo.html           # Demo page template
 │   ├── demo2.html          # Second demo page template
@@ -210,10 +210,10 @@ manual with JS API).
 └── .vscode/                # Editor recommendations & settings (partials = ejs)
 ```
 
-**Swapping the sprite:** simply replace `public/sprite.svg` with another
+**Swapping the sprite:** simply replace `public/ico.svg` with another
 `symbol`-based sprite (a file with a valid `<symbol id="…">` per icon) — the
 demo and the components adapt automatically (dynamic at runtime). RSBuild only
-serves the contents of `public/`; a `sprite.svg` of the same name in the project
+serves the contents of `public/`; an `ico.svg` of the same name in the project
 root is **not** served and is only meant for editing.
 
 ## Technical background

@@ -1,0 +1,124 @@
+/* The marker band: one tile of stroke, repeated across the width of the
+   text. Everything lives in CSS - the page markup contains nothing but the
+   text itself, not even an empty element.
+
+   The band is a ::before on .heading-text, painted with a tile image that
+   repeats horizontally (mask-repeat: round), so it covers any heading width
+   without knowing it in advance.
+
+   The tile is a small SVG as a data URI: a single stroked path in a 20x60
+   box. It is used as a MASK, not as a background - the shape only decides
+   where the band shows, and `background-color` decides its color, so the
+   marker color stays an ordinary CSS value.
+
+   Changing the marker means editing the tile image: the `d` value draws
+   another shape, `stroke-width` changes how heavy it is. Both are baked into
+   the data URI, which is why they are not variables - a data URI cannot
+   interpolate a value. The 18/20 ratio (stroke and tile width) therefore
+   stays fixed, and only --marker-tile-pitch below rescales the whole band
+   proportionally, stroke and gap together. */
+
+.marker-heading {
+  --marker-color: #f6dc55;
+  --marker-opacity: 0.7;
+  --marker-stroke-tilt: 0deg;
+
+  /* The band is exactly one tile tall, so a bar is never cropped. */
+  --marker-tile-height: 60px;
+
+  /* How often the tile repeats. Must match the width of the tile image. */
+  --marker-tile-pitch: 20px;
+
+  /* The tile is a single stroked path in a 20x60 box.
+     The <style> block inside the data URI is the only place CSS can reach
+     this path: a data URI is a separate document, so the page stylesheet
+     cannot touch what is inside it. stroke-linecap: round is what makes the
+     bar fill the tile - the path runs from y=10 to y=50 and the round caps
+     add 9px on each end, so the ink covers y=1..59 instead of stopping flat
+     at y=10 and y=50. The path is used as a mask, so the stroke color is
+     irrelevant; only its alpha counts. */
+  --marker-tile: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='60'%3E%3Cstyle%3Epath { stroke-linecap: round; }%3C/style%3E%3Cpath d='M9.7 50 C7.7 39 9.7 18 9.7 10' fill='none' stroke='black' stroke-width='18'/%3E%3C/svg%3E");
+
+  padding: 0.12em 0;
+
+  line-height: 1.1;
+}
+
+/* The heading typography is qualified with the element on purpose. A heading
+   inside a page title also matches generic rules such as `.page-title h1`
+   in shared.css, and those are more specific than a single class - without
+   the element the heading would be shrunk away from its marker band. */
+h1.marker-heading {
+  color: #111;
+  font-size: 48px;
+  font-weight: 700;
+}
+
+/* A marker subtitle stays a subtitle: only the color is forced, because it
+   sits on the marker band and must not fall back to the muted page color.
+   The band is thinner here - the tile is drawn from its top edge, so a short
+   band shows the upper part of the bar. */
+p.marker-heading {
+  --marker-tile-height: 20px;
+
+  color: #111;
+}
+
+/* The text span is the sizing context for the marker: `width: fit-content`
+   makes it shrink to the text, so the marker band ends exactly where the
+   text ends - even when the heading block itself is wider (e.g. a fixed
+   width on the block). The band is one tile tall: the line box (1.1em) is
+   padded out to --marker-tile-height, so a heading in any font or size
+   still gets a full bar and never a cropped one.
+   The skewY tilt sits here, on the whole span, so text and marker band tilt
+   together. Keep it small (1deg or less) - the band is clipped to its own
+   box, a strong tilt shears the stripes out of it. */
+.heading-text {
+  position: relative;
+  isolation: isolate;
+
+  display: inline-block;
+  width: fit-content;
+
+  padding: calc((var(--marker-tile-height) - 1.1em) / 2) 8px;
+
+  transform: skewY(var(--marker-stroke-tilt));
+}
+
+.heading-text::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+
+  top: 0;
+  left: 0;
+
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  pointer-events: none;
+
+  background-color: var(--marker-color);
+  opacity: var(--marker-opacity);
+
+  mask-image: var(--marker-tile);
+
+  /* round, not repeat-x and not space. A heading is rarely an exact multiple
+     of the tile pitch:
+       repeat-x  chops the last tile at the text edge,
+       space     puts the leftover only BETWEEN the tiles, so the last bar
+                 ends about a pixel too close to the text - the band looks
+                 cut right there,
+       round     scales the tile so a whole number of them fills the band.
+     With round there is no leftover at all, so the last bar sits exactly as
+     far from the text end as any bar sits from its neighbour. Only the
+     horizontal size is touched, and by a fraction of a percent, so the bar
+     keeps its width and the round caps keep their shape. */
+  mask-repeat: round;
+
+  /* The tile is drawn at its intrinsic size - only the horizontal repeat
+     interval is set, so a shorter band crops the tile instead of squashing
+     it. */
+  mask-size: var(--marker-tile-pitch) auto;
+}

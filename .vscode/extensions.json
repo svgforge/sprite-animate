@@ -1,3 +1,7 @@
 {
-  "recommendations": ["biomejs.biome", "QassimFarid.ejs-language-support"]
+  "recommendations": [
+    "biomejs.biome",
+    "christian-kohler.npm-intellisense",
+    "editorconfig.editorconfig"
+  ]
 }

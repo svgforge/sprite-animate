@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>svg-morph — Pattern Studio</title>
     <link rel="stylesheet" href="./css/shared.css">
+    <link rel="stylesheet" href="./css/marker-heading.css">
+
     <style>
     .pattern-bg {
       /* The pattern is the normal page background: it scrolls with the
@@ -220,8 +222,16 @@
     <main class="page">
       <div class="hero">
         <div class="page-title">
-          <h1>Pattern Studio</h1>
-          <p>Seamless SVG patterns as a live background — pick a family, a seed and tweak the sliders</p>
+          <h1 class="marker-heading" style="color:#000; --marker-color: #fff; --marker-opacity: 0.6; --marker-stroke-tilt: -5deg;">
+            <span class="heading-text">
+              <!-- No band markup at all: the marker band is a ::before on
+                   .heading-text, one tile image repeated horizontally. The
+                   tile, the color and the tilt are all set in
+                   css/marker-heading.css. -->
+              Pattern Studio
+            </span>
+          </h1>
+
         </div>
 
         <div class="control-card">

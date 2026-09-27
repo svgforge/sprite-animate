@@ -6,3 +6,6 @@ packages: []
 # core-js (transitive dependency of @rsbuild/core) has a build script.
 allowBuilds:
   core-js: true
+
+minimumReleaseAgeExclude:
+  - '@svgforge/svgforge@3.0.0-beta.1'

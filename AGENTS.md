@@ -37,14 +37,14 @@ Component** (`<svg-morph>`), built with **GSAP MorphSVGPlugin** + **RSBuild**
   (linear/rotational), controls/debug only created on demand
   (create/remove, no `hidden`).
 - **`src/demo*.ts`** — build the demo pages dynamically from
-  `public/sprite.svg` (cards via `createCard`; always set `controls`/`debug`).
+  `public/ico.svg` (cards via `createCard`; always set `controls`/`debug`).
 - **`public/*.html`** — RSBuild entry templates with EJS-like syntax
   (`<%= headerPartial %>`).
 - **`templates/header.html` + `templates/footer.html`** — partials, injected in
   `rsbuild.config.ts` via `templateParameters` (NO real EJS `include`).
 - **`public/css/shared.css`** — static stylesheet (linked, not an injected
   string).
-- **`public/sprite.svg`** — the active symbol source. A `sprite.svg` in the
+- **`public/ico.svg`** — the active symbol source. An `ico.svg` in the
   project root is stale and is **not** served (only `public/` is shipped).
 - **`dist/lib/svg-morph.js`** — standalone release bundle, reachable at
   `/lib/svg-morph.js` in dev and production (dev via middleware).
@@ -63,7 +63,7 @@ Component** (`<svg-morph>`), built with **GSAP MorphSVGPlugin** + **RSBuild**
 - After changes to `src/` or `public/css/` ALWAYS run `pnpm run lint` and fix
   errors (`×`) — only warnings/infos may remain.
 - `biome.json`: template HTML excluded; `noSvgWithoutTitle` disabled for
-  `public/sprite.svg` (symbol sprite, not standalone icons).
+  `public/ico.svg` (symbol sprite, not standalone icons).
 - `.gitignore`: `node_modules/`, `dist/`.
 
 ## Git

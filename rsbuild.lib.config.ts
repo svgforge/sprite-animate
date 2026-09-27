@@ -6,7 +6,7 @@ import { defineConfig } from "@rsbuild/core";
 // the custom element on load, so it can be dropped into any page:
 //
 //   <script src="/path/to/svg-morph.js"></script>
-//   <svg-morph sprite-href="/sprite.svg"></svg-morph>
+//   <svg-morph sprite-href="/ico.svg"></svg-morph>
 export default defineConfig({
   source: {
     // Side-effect entry: importing svg-morph.ts calls customElements.define().

@@ -2,9 +2,9 @@
 // customElements.define(), so we can use it below.
 import "./svg-morph";
 
-// The sprite is read at runtime: swapping sprite.svg in public/ is enough,
+// The sprite is read at runtime: swapping ico.svg in public/ is enough,
 // this demo page then adapts automatically to whatever symbols it contains.
-const SPRITE_HREF = "./sprite.svg";
+const SPRITE_HREF = "/ico.svg";
 
 interface CardButton {
   label: string;
@@ -131,7 +131,7 @@ async function buildDemo(): Promise<void> {
       description: "Loads all symbols from sprite, morphs continuously",
       icons: null,
       attributes: {},
-      note: `<svg-morph sprite-href="./sprite.svg"></svg-morph>`,
+      note: `<svg-morph sprite-href="/ico.svg"></svg-morph>`,
     },
     {
       title: "Specific Icons Only",

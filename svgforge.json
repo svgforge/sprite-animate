@@ -1,0 +1,40 @@
+{
+  "dest": "./public",
+  "shape": {
+    "dimension": {
+      "maxWidth": 48,
+      "maxHeight": 48
+    },
+    "spacing": {
+      "box": "content",
+      "padding": 0
+    },
+    "transform": [
+      {
+        "svgo": {
+          "plugins": [
+            {
+              "name": "removeAttrs",
+              "params": {
+                "attrs": "fill"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "mode": {
+    "symbol": {
+      "dest": ".",
+      "sprite": "ico.svg",
+      "inline": false,
+      "render": {
+        "css": false
+      },
+      "example": {
+        "dest": "ico.html"
+      }
+    }
+  }
+}

@@ -40,7 +40,7 @@ export default defineConfig({
     }),
   },
 
-  // sprite.svg and other static files in public/ are copied to dist/ as-is.
+  // ico.svg and other static files in public/ are copied to dist/ as-is.
   output: {
     distPath: {
       root: "dist",
