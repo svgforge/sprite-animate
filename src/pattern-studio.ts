@@ -12,9 +12,12 @@
  * the markup, and the studio can also be mounted into a part of a page.
  *
  * The parts, each readable on its own:
- * - `Slider` — one slider input and the readout that shows its value,
+ * - `Slider` — one slider of the card, with its readout,
  * - `StudioUi` — the elements the studio drives, found once,
  * - `PatternStudio` — the settings, the background, the presets and the wiring.
+ *
+ * The family chooser is a `<jd-select>` from `./jd-select`, which brings its
+ * own list; the studio only fills its options and reads and writes its value.
  *
  * @example
  * The whole page, with the markup already in place:
@@ -33,6 +36,7 @@
  * const svg = generateStandaloneSvg(studio.currentSettings, canvas);
  * ```
  */
+import type { JDSelectElement } from "./jd-select";
 import {
   type Canvas,
   DEFAULT_SETTINGS,
@@ -97,15 +101,6 @@ const FAMILY_TEXTS: Record<FamilyId, { label: string; description: string; densi
   },
 };
 
-/**
- * Id of a slider of the control card.
- *
- * @remarks
- * The id of a slider is also the id of its input and of its readout in the
- * markup, so the card and this type cannot drift apart.
- */
-export type SliderKey = "count" | "size" | "opacity" | "colors" | "hue" | "rotation";
-
 interface FieldSpec {
   key: SliderKey;
   // Whether the randomize button touches this slider. Opacity is left out on
@@ -128,10 +123,6 @@ const FIELDS: FieldSpec[] = [
   { key: "hue", random: true },
   { key: "rotation", random: true },
 ];
-
-function find<T extends Element>(root: ParentNode, id: string): T | null {
-  return root.querySelector<T>(`#${id}`);
-}
 
 function randomSeed(): number {
   return Math.floor(Math.random() * 0xffffffff) >>> 0;
@@ -179,19 +170,36 @@ async function writeClipboard(text: string): Promise<boolean> {
   }
 }
 
-// --- Slider ----------------------------------------------------------------
+// --- Controls --------------------------------------------------------------
+
+/**
+ * Id of a slider of the control card.
+ *
+ * @remarks
+ * The id of a slider is also the id of its input and of its readout in the
+ * markup, so the card and this type cannot drift apart.
+ */
+export type SliderKey = "count" | "size" | "opacity" | "colors" | "hue" | "rotation";
+
+/**
+ * Looks an element up by id inside a root, so a page only has to provide the
+ * markup. Returns null when the id is not there, which every control tolerates.
+ */
+function find<T extends Element>(root: ParentNode, id: string): T | null {
+  return root.querySelector<T>(`#${id}`);
+}
 
 /**
  * One slider of the control card and the readout next to it. It knows nothing
  * about the settings: it reports what the user did and shows what it is told.
  */
-class Slider {
+export class Slider {
   readonly input: HTMLInputElement | null;
   private readonly readout: HTMLOutputElement | null;
 
-  constructor(root: ParentNode, field: FieldSpec) {
-    this.input = find<HTMLInputElement>(root, field.key);
-    this.readout = find<HTMLOutputElement>(root, `${field.key}-readout`);
+  constructor(root: ParentNode, key: SliderKey) {
+    this.input = find<HTMLInputElement>(root, key);
+    this.readout = find<HTMLOutputElement>(root, `${key}-readout`);
   }
 
   get value(): number {
@@ -245,7 +253,7 @@ class Slider {
  */
 interface StudioUi {
   background: HTMLElement | null;
-  familySelect: HTMLSelectElement | null;
+  familySelect: JDSelectElement | null;
   familyDescription: HTMLElement | null;
   densityLabel: HTMLElement | null;
   seedInput: HTMLInputElement | null;
@@ -267,12 +275,12 @@ interface StudioUi {
 function createUi(root: ParentNode): StudioUi {
   const sliders = {} as Record<SliderKey, Slider>;
   for (const field of FIELDS) {
-    sliders[field.key] = new Slider(root, field);
+    sliders[field.key] = new Slider(root, field.key);
   }
 
   return {
     background: find(root, "pattern-bg"),
-    familySelect: find<HTMLSelectElement>(root, "pattern"),
+    familySelect: find<JDSelectElement>(root, "pattern"),
     familyDescription: find(root, "family-desc"),
     densityLabel: find(root, "density-label"),
     seedInput: find<HTMLInputElement>(root, "seed"),
@@ -624,16 +632,27 @@ export class PatternStudio {
     if (resetDensity) this.settings.density = family.densityDefault;
   }
 
+  /**
+   * Puts one `<jd-option>` per family into the chooser.
+   *
+   * @remarks
+   * The families and their texts are joined here, because the engine knows
+   * only the numeric side of a family. The chooser takes them from its markup
+   * the way a native select does; it draws its own list and keeps the current
+   * one chosen.
+   */
   private fillFamilySelect(): void {
     const select = this.ui.familySelect;
     if (!select) return;
-    for (const family of FAMILIES) {
-      const option = document.createElement("option");
+    const options = FAMILIES.map((family) => {
+      const text = FAMILY_TEXTS[family.id];
+      const option = document.createElement("jd-option");
       option.value = family.id;
-      option.textContent = FAMILY_TEXTS[family.id].label;
-      select.append(option);
-    }
-    select.value = this.settings.family;
+      option.setAttribute("description", text.description);
+      option.textContent = text.label;
+      return option;
+    });
+    select.replaceChildren(...options);
   }
 
   /** A manual edit means the settings no longer match the active preset. */
@@ -654,12 +673,13 @@ export class PatternStudio {
   private connect(): void {
     const ui = this.ui;
 
-    const familySelect = ui.familySelect;
-    if (familySelect) {
-      familySelect.addEventListener("change", () => {
-        this.setFamily(familySelect.value as FamilyId);
-      });
-    }
+    // The chooser speaks the words of a native select: it fires `change` when
+    // the user picks something, and stays quiet when the value is set from
+    // script - which is how the family default and the presets work.
+    ui.familySelect?.addEventListener("change", () => {
+      const chosen = ui.familySelect?.value ?? "";
+      if (FAMILY_BY_ID.has(chosen as FamilyId)) this.setFamily(chosen as FamilyId);
+    });
 
     const seedInput = ui.seedInput;
     if (seedInput) {
