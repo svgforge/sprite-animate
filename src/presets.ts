@@ -1,41 +1,93 @@
-// src/presets.ts
-//
-// Preset handling for the Pattern Studio (demo3). A preset is a named
-// snapshot of the pattern settings. This module is pure (no DOM, no storage):
-// it validates, sanitizes and serializes presets, so the exported files and
-// the localStorage content always stay in a known shape.
+/**
+ * Preset handling for the Pattern Studio.
+ *
+ * @remarks
+ * A preset is a named snapshot of a pattern's settings. This module is pure — no
+ * DOM, no storage — and it validates, sanitizes and serializes, so that what
+ * comes back out of localStorage and what comes in through an imported file is
+ * always in the shape this module defines. Where the presets are kept, and what
+ * the page says about them, is the UI's business.
+ *
+ * @example
+ * ```ts
+ * const presets = parsePresets(text) ?? [];
+ * const stored = JSON.stringify(serializePresets(presets));
+ * ```
+ */
+import { FAMILY_BY_ID, type FamilyId, type PatternSettings } from "./pattern";
 
-import { FAMILY_BY_ID, type FamilyId, type PatternSettings } from "./patterns";
-
+/**
+ * A named pattern, as it is stored and as it is exported.
+ */
 export interface Preset {
+  /** Name the preset is listed and saved under. */
   name: string;
+  /** The pattern the preset stands for. */
   settings: PatternSettings;
 }
 
+/**
+ * Version of the preset file format, written into every export so that a later
+ * format can be told apart from this one.
+ */
 export const PRESET_FILE_VERSION = 1;
 
-// Sort presets by name, so list and export have a stable order.
+/**
+ * Returns the presets sorted by name, so that a list and an export file have a
+ * stable order.
+ *
+ * @param presets - The presets to sort.
+ * @returns A new, sorted array; the input is left as it is.
+ */
 export function sortPresets(presets: Preset[]): Preset[] {
   return [...presets].sort((a, b) => a.name.localeCompare(b.name));
 }
 
-// Insert a preset or replace an existing one with the same name.
+/**
+ * Adds a preset, or replaces the one that already goes by the same name.
+ *
+ * @param presets - The presets to add to.
+ * @param preset - The preset to add or replace.
+ * @returns A new array; the input is left as it is.
+ */
 export function upsertPreset(presets: Preset[], preset: Preset): Preset[] {
   const withoutName = presets.filter((entry) => entry.name !== preset.name);
   return [...withoutName, preset];
 }
 
+/**
+ * Returns the presets without the one of the given name.
+ *
+ * @param presets - The presets to filter.
+ * @param name - Name of the preset to drop.
+ * @returns A new array; the input is left as it is.
+ */
 export function removePreset(presets: Preset[], name: string): Preset[] {
   return presets.filter((entry) => entry.name !== name);
 }
 
-// Serialize presets for storage and export.
+/**
+ * Serializes presets into the JSON of the preset file, for storage and export.
+ *
+ * @param presets - The presets to write.
+ * @returns The file content, pretty-printed and sorted by name.
+ */
 export function serializePresets(presets: Preset[]): string {
   return JSON.stringify({ version: PRESET_FILE_VERSION, presets: sortPresets(presets) }, null, 2);
 }
 
-// Parse exported JSON into presets. Unknown values are dropped, out-of-range
-// values are clamped. Returns null when nothing usable could be read.
+/**
+ * Reads presets out of the JSON of a preset file.
+ *
+ * @remarks
+ * Nothing is trusted here: a preset that is not a preset is dropped, values that
+ * are out of range are clamped, and a family that no longer exists falls back to
+ * a family that does. This is what makes an imported or restored file safe to
+ * use.
+ *
+ * @param json - The file content.
+ * @returns The presets that could be read, or `null` if there were none.
+ */
 export function parsePresets(json: string): Preset[] | null {
   let parsed: unknown;
   try {

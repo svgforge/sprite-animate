@@ -1,14 +1,29 @@
-// src/patterns.ts
-//
-// Seamless SVG pattern generators for the Pattern Studio (demo3).
-//
-// Every family draws one tile that repeats without visible seams:
-// - grid-based families draw inside their cells, nothing crosses the border,
-// - the hand-drawn family wraps every shape around the tile edges.
-//
-// Rotation is applied per family and snapped to the angles that keep the
-// tile seamless (e.g. 90° for waves/chevrons, any angle for hand-drawn glyphs).
-
+/**
+ * The pattern engine of the Pattern Studio.
+ *
+ * @remarks
+ * Everything that turns settings into SVG lives in this module: the families
+ * that draw the tiles, and the two documents they are rendered into. It is pure —
+ * no DOM, no page, no user-facing texts — so the drawing can be read, changed
+ * and tested on its own. The words the control card shows for a family live
+ * with the UI, in `./pattern-studio`.
+ *
+ * Every family draws one tile that repeats without visible seams: the
+ * grid-based families draw inside their cells, so nothing crosses the border,
+ * and the hand-drawn family wraps every shape around the tile edges. Rotation is
+ * applied per family and snapped to the angles that keep the tile seamless
+ * (e.g. 90° for waves and chevrons, any angle for hand-drawn glyphs).
+ *
+ * @example
+ * A pattern as a document that fills the box it is put into:
+ *
+ * ```ts
+ * const svg = generatePattern({ ...DEFAULT_SETTINGS, family: "waves" });
+ * ```
+ */
+/**
+ * Id of a pattern family. Adding a family means adding its id here.
+ */
 export type FamilyId =
   | "dots"
   | "triangles"
@@ -18,40 +33,82 @@ export type FamilyId =
   | "rhombus"
   | "handdrawn";
 
+/**
+ * A pattern, as the numbers the engine draws it from.
+ *
+ * @remarks
+ * These are the pattern itself, nothing else. What a page does with the result —
+ * which colors it shows, how big the pattern is on screen, which family is
+ * called what — belongs to the UI and never reaches this module.
+ */
 export interface PatternSettings {
+  /** The family that draws the tile. */
   family: FamilyId;
+  /** Start value of the generator. The same seed always gives the same pattern. */
   seed: number;
+  /** How much the family draws per tile, counted in the unit of the family. */
   density: number;
-  size: number; // tile size in px
-  opacity: number; // element alpha 0..1
-  colors: number; // number of distinct hues 1..8
-  hue: number; // base hue 0..360
-  rotation: number; // global rotation in degrees
+  /** Edge length of the tile in px. Rendered clamped to 40..400. */
+  size: number;
+  /** Alpha the palette starts from; the other colors fade from it. 0..1. */
+  opacity: number;
+  /** Number of distinct hues in the palette. 1..8. */
+  colors: number;
+  /** Hue the palette starts at, in degrees. 0..360. */
+  hue: number;
+  /** Rotation of the whole field, in degrees. */
+  rotation: number;
 }
 
+/**
+ * What a family gets to draw one tile with: the seeded random source, the tile
+ * size, the density, and the palette the engine has already resolved from the
+ * settings.
+ */
 export interface FamilyInput {
+  /** Seeded random source, returning numbers from 0 (inclusive) to 1 (exclusive). */
   rand: () => number;
+  /** Edge length of the tile in px. */
   tile: number;
+  /** How much to draw, counted in the unit of the family. */
   density: number;
+  /** Softer colors of the palette, for surfaces. */
   fills: string[];
+  /** Vivid colors of the palette, for strokes. */
   inks: string[];
+  /** Light/deep pairs of each hue, for families that shade a plane. */
   facets: Facet[];
 }
 
+/**
+ * A family as the engine knows it: the range its density works in, and the
+ * function that draws one tile.
+ *
+ * @remarks
+ * The numbers describe where a family looks right. Nothing validates them here —
+ * the engine only reads the density it is handed — so a UI can offer the range
+ * as the limits of a control. The name and the description of a family are
+ * presentation and belong to the UI.
+ */
 export interface Family {
+  /** Id under which the family is selected. */
   id: FamilyId;
-  label: string;
-  description: string;
-  densityLabel: string;
+  /** Lowest density the family is meant for. */
   densityMin: number;
+  /** Highest density the family is meant for. */
   densityMax: number;
+  /** Step the density moves in. Some families need an even step to stay seamless. */
   densityStep: number;
+  /** Density a fresh pattern of this family starts with. */
   densityDefault: number;
+  /** Draws the content of one tile, without the `<pattern>` element around it. */
   build: (input: FamilyInput) => string;
 }
 
-// Deterministic PRNG (mulberry32): the same seed always produces the same
-// sequence, so a seed fully defines a pattern.
+/**
+ * Deterministic PRNG (mulberry32): the same seed always produces the same
+ * sequence, so a seed fully defines a pattern.
+ */
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
@@ -67,13 +124,15 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-// Round a number to two decimals for clean SVG output.
+/** Round a number to two decimals for clean SVG output. */
 function fmt(value: number): string {
   return (Math.round(value * 100) / 100).toFixed(2);
 }
 
-// Convert HSL (0..360, percent, percent) to an rgba() string. The generic
-// rgba() form is supported by every renderer (browsers and preview tools).
+/**
+ * Convert HSL (0..360, percent, percent) to an rgba() string. The generic
+ * rgba() form is supported by every renderer (browsers and preview tools).
+ */
 function color(hue: number, sat: number, light: number, alpha: number): string {
   const s = sat / 100;
   const l = light / 100;
@@ -94,11 +153,17 @@ function color(hue: number, sat: number, light: number, alpha: number): string {
   return `rgba(${to255(r)}, ${to255(g)}, ${to255(b)}, ${alphaRounded})`;
 }
 
-// The color palette. `fills` are softer (surfaces), `inks` are vivid
-// (strokes), `facets` are the light/deep pairs used by the triangle family to
-// create a shaded, faceted look. Hues spread evenly from the base hue.
+/**
+ * One hue of the palette as a light and a deep tone.
+ *
+ * @remarks
+ * The triangle family uses the pair to give a plane a shaded, faceted look, the
+ * way one side catches the light and the other turns away.
+ */
 export interface Facet {
+  /** Pale, desaturated tone — a plane turned toward the light. */
   light: string;
+  /** Saturated, darker tone — a plane turned away. */
   deep: string;
 }
 
@@ -122,29 +187,32 @@ function palette(settings: PatternSettings): { fills: string[]; inks: string[]; 
   return { fills, inks, facets };
 }
 
-// Map a normalized, tile-periodic position to a palette index. `position`
-// must grow by a whole number when the tile index wraps (e.g. (i + j) / n),
-// so the assignment repeats exactly with the tile and no color seam appears
-// at the tile edges. `offset` (seed-driven) shifts the bands without breaking
-// the periodicity.
+/**
+ * Map a normalized, tile-periodic position to a palette index. `position`
+ * must grow by a whole number when the tile index wraps (e.g. (i + j) / n),
+ * so the assignment repeats exactly with the tile and no color seam appears
+ * at the tile edges. `offset` (seed-driven) shifts the bands without breaking
+ * the periodicity.
+ */
 function bandIndex(count: number, position: number, offset: number): number {
   const wrapped = (((position + offset) % 1) + 1) % 1;
   return Math.min(count - 1, Math.floor(wrapped * count));
 }
 
-// Pick a color from the palette at a tile-periodic position (see bandIndex).
+/** Pick a color from the palette at a tile-periodic position (see bandIndex). */
 function bandColor(list: string[], position: number, offset: number): string {
   return list[bandIndex(list.length, position, offset)];
 }
 
 // --- Dots / halftone ---------------------------------------------------------
-//
-// Two staggered dot grids: dots on the cell centers plus smaller dots offset
-// by a quarter cell. Both stay fully inside their cells — no dot sits on the
-// tile boundary — so the tile repeats cleanly. The dot size swells and shrinks
-// in one full sine period across the tile (a halftone-like gradient) and the
-// palette is assigned in tile-periodic bands.
 
+/**
+ * Two staggered dot grids: dots on the cell centers plus smaller dots offset
+ * by a quarter cell. Both stay fully inside their cells — no dot sits on the
+ * tile boundary — so the tile repeats cleanly. The dot size swells and shrinks
+ * in one full sine period across the tile (a halftone-like gradient) and the
+ * palette is assigned in tile-periodic bands.
+ */
 function buildDots(input: FamilyInput): string {
   const { tile, density, fills, rand } = input;
   const n = clamp(Math.round(density), 4, 24);
@@ -175,12 +243,13 @@ function buildDots(input: FamilyInput): string {
 }
 
 // --- Triangles / tessellation -------------------------------------------------
-//
-// Half-square tessellation split like origami: every cell is divided along a
-// diagonal (checkerboard alternating), one half gets the light facet and the
-// other the deep facet of the same hue — a shaded prism / folded-plane look.
-// A thin self-stroke keeps chip edges crisp and the tile seamless.
 
+/**
+ * Half-square tessellation split like origami: every cell is divided along a
+ * diagonal (checkerboard alternating), one half gets the light facet and the
+ * other the deep facet of the same hue — a shaded prism / folded-plane look.
+ * A thin self-stroke keeps chip edges crisp and the tile seamless.
+ */
 function buildTriangles(input: FamilyInput): string {
   const { tile, density, facets, rand } = input;
   // Even cell count keeps the alternating diagonals continuous at the edges.
@@ -216,11 +285,12 @@ function buildTriangles(input: FamilyInput): string {
 }
 
 // --- Waves / topography --------------------------------------------------------
-//
-// Stacked sine waves, each with its own phase and amplitude. The wave count
-// divides the tile, and every line completes full cycles across the tile, so
-// the pattern is seamless in both directions.
 
+/**
+ * Stacked sine waves, each with its own phase and amplitude. The wave count
+ * divides the tile, and every line completes full cycles across the tile, so
+ * the pattern is seamless in both directions.
+ */
 function buildWaves(input: FamilyInput): string {
   const { tile, density, inks, rand } = input;
   const lines = clamp(Math.round(density), 3, 30);
@@ -254,11 +324,12 @@ function buildWaves(input: FamilyInput): string {
 }
 
 // --- Chevrons / stripes --------------------------------------------------------
-//
-// Bold chevron arrows ("›") on a grid. Rows alternate their direction like a
-// herringbone weave, colors flow in tile-periodic bands, and every arrow sits
-// fully inside its cell — so the tile repeats without seams.
 
+/**
+ * Bold chevron arrows ("›") on a grid. Rows alternate their direction like a
+ * herringbone weave, colors flow in tile-periodic bands, and every arrow sits
+ * fully inside its cell — so the tile repeats without seams.
+ */
 function buildChevrons(input: FamilyInput): string {
   const { tile, density, fills, rand } = input;
   // Even row count keeps the alternating row rhythm continuous at the edges.
@@ -295,10 +366,11 @@ function buildChevrons(input: FamilyInput): string {
 }
 
 // --- Concentric / bullseye -------------------------------------------------------
-//
-// Concentric rings centered at the quarter points of the tile. The ring radius
-// stays below half the center spacing, so neighboring bullseyes never overlap.
 
+/**
+ * Concentric rings centered at the quarter points of the tile. The ring radius
+ * stays below half the center spacing, so neighboring bullseyes never overlap.
+ */
 function buildBullseye(input: FamilyInput): string {
   const { tile, density, inks, fills, rand } = input;
   const rings = clamp(Math.round(density), 1, 10);
@@ -332,10 +404,11 @@ function buildBullseye(input: FamilyInput): string {
 }
 
 // --- Rhombus / lattice ------------------------------------------------------------
-//
-// Diamond outlines on a grid with filled diamonds on every other node — a
-// woven lattice look.
 
+/**
+ * Diamond outlines on a grid with filled diamonds on every other node — a
+ * woven lattice look.
+ */
 function buildRhombus(input: FamilyInput): string {
   const { tile, density, inks, fills, rand } = input;
   const n = clamp(Math.round(density), 2, 12);
@@ -375,11 +448,12 @@ function buildRhombus(input: FamilyInput): string {
 }
 
 // --- Hand drawn lines and shapes -------------------------------------------------
-//
-// Imperfect, organic doodles: wobbly rings, wobbly triangles, squiggly lines
-// and short dabs. Every shape is placed inside the tile and then the whole
-// tile is wrapped around its edges, so the repeat stays seamless.
 
+/**
+ * Imperfect, organic doodles: wobbly rings, wobbly triangles, squiggly lines
+ * and short dabs. Every shape is placed inside the tile and then the whole
+ * tile is wrapped around its edges, so the repeat stays seamless.
+ */
 function handDrawnRing(
   cx: number,
   cy: number,
@@ -489,8 +563,10 @@ function buildHandDrawn(input: FamilyInput): string {
   return wrapTile(pieces.join("\n    "), tile);
 }
 
-// Duplicate the tile content around its eight neighbors. Shapes that cross a
-// tile edge reappear on the opposite side, which makes the repeat seamless.
+/**
+ * Duplicate the tile content around its eight neighbors. Shapes that cross a
+ * tile edge reappear on the opposite side, which makes the repeat seamless.
+ */
 function wrapTile(content: string, tile: number): string {
   const pieces = [content];
   for (const dx of [-tile, 0, tile]) {
@@ -502,12 +578,12 @@ function wrapTile(content: string, tile: number): string {
   return pieces.join("\n    ");
 }
 
+/**
+ * All families, in the order they are offered in.
+ */
 export const FAMILIES: Family[] = [
   {
     id: "dots",
-    label: "Dots / halftone",
-    description: "Two staggered dot grids with a halftone-like size wash.",
-    densityLabel: "Dots per row",
     densityMin: 4,
     densityMax: 24,
     densityStep: 1,
@@ -516,9 +592,6 @@ export const FAMILIES: Family[] = [
   },
   {
     id: "triangles",
-    label: "Triangles / tessellation",
-    description: "Half-square triangles in a checkerboard prism tessellation.",
-    densityLabel: "Cells per row",
     densityMin: 2,
     densityMax: 14,
     // Even steps keep the alternating diagonals seamless at the tile edges.
@@ -528,9 +601,6 @@ export const FAMILIES: Family[] = [
   },
   {
     id: "waves",
-    label: "Waves / topography",
-    description: "Stacked sine waves with individual phases and line colors.",
-    densityLabel: "Wave lines",
     densityMin: 3,
     densityMax: 30,
     densityStep: 1,
@@ -539,9 +609,6 @@ export const FAMILIES: Family[] = [
   },
   {
     id: "chevrons",
-    label: "Chevrons / stripes",
-    description: "Chevron arrows in a herringbone weave with a diagonal color flow.",
-    densityLabel: "Arrows per row",
     densityMin: 2,
     densityMax: 12,
     // Even steps keep the alternating row rhythm seamless at the tile edges.
@@ -551,9 +618,6 @@ export const FAMILIES: Family[] = [
   },
   {
     id: "bullseye",
-    label: "Concentric / bullseye",
-    description: "Concentric rings centered at the tile quarter points.",
-    densityLabel: "Rings per bullseye",
     densityMin: 1,
     densityMax: 10,
     densityStep: 1,
@@ -562,9 +626,6 @@ export const FAMILIES: Family[] = [
   },
   {
     id: "rhombus",
-    label: "Rhombus / lattice",
-    description: "Diamond outlines with filled diamonds on alternating nodes.",
-    densityLabel: "Diamonds per row",
     densityMin: 2,
     densityMax: 12,
     densityStep: 1,
@@ -573,9 +634,6 @@ export const FAMILIES: Family[] = [
   },
   {
     id: "handdrawn",
-    label: "Hand-drawn",
-    description: "Imperfect rings, triangles, squiggles and dabs — like doodles.",
-    densityLabel: "Shapes per tile",
     densityMin: 8,
     densityMax: 140,
     densityStep: 1,
@@ -584,23 +642,32 @@ export const FAMILIES: Family[] = [
   },
 ];
 
+/**
+ * The same families by id, for settings that name one.
+ */
 export const FAMILY_BY_ID: ReadonlyMap<FamilyId, Family> = new Map(
   FAMILIES.map((family) => [family.id, family]),
 );
 
+/**
+ * The pattern a fresh page starts with: the dots family, mid density, a
+ * cool hue.
+ */
 export const DEFAULT_SETTINGS: PatternSettings = {
   family: "dots",
   seed: 1337,
   density: 8,
   size: 240,
-  opacity: 0.9,
+  opacity: 1,
   colors: 3,
   hue: 190,
   rotation: 0,
 };
 
-// Build the tile content plus the pattern rotation transform for the given
-// settings. Shared by the live background and the standalone export.
+/**
+ * Build the tile content plus the pattern rotation transform for the given
+ * settings. Shared by the live background and the standalone export.
+ */
 function buildTile(settings: PatternSettings): {
   tile: number;
   content: string;
@@ -620,6 +687,18 @@ function buildTile(settings: PatternSettings): {
   return { tile, content, rotationAttr };
 }
 
+/**
+ * Renders a pattern as an SVG document that fills whatever box it is put into,
+ * so it can be dropped into a page as a background as it is.
+ *
+ * @param settings - The pattern to draw.
+ * @returns The SVG markup of the pattern.
+ *
+ * @example
+ * ```ts
+ * element.innerHTML = generatePattern(settings);
+ * ```
+ */
 export function generatePattern(settings: PatternSettings): string {
   const { tile, content, rotationAttr } = buildTile(settings);
   return [
@@ -634,16 +713,18 @@ export function generatePattern(settings: PatternSettings): string {
   ].join("\n");
 }
 
-// Split an rgba() color into a solid rgb() color plus its alpha.
+/** Split an rgba() color into a solid rgb() color plus its alpha. */
 function splitRgba(value: string): { rgb: string; alpha: number } | null {
   const match = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/.exec(value);
   if (!match) return null;
   return { rgb: `rgb(${match[1]}, ${match[2]}, ${match[3]})`, alpha: Number(match[4]) };
 }
 
-// Replace rgba() fills and strokes with their solid rgb() color plus an
-// explicit fill-/stroke-opacity attribute. Editors like Inkscape render
-// rgba() colors as black, so exported files must use the split form.
+/**
+ * Replace rgba() fills and strokes with their solid rgb() color plus an
+ * explicit fill-/stroke-opacity attribute. Editors like Inkscape render
+ * rgba() colors as black, so exported files must use the split form.
+ */
 function solidColors(markup: string): string {
   return markup.replace(/<[^>]+>/g, (tag) => {
     let output = tag;
@@ -662,16 +743,42 @@ function solidColors(markup: string): string {
   });
 }
 
-// A self-contained SVG file of the pattern: fixed viewport so editors like
-// Inkscape open it at a real size, a dark backdrop like on the page, and
-// solid colors (see solidColors) that every editor renders correctly.
-export function generateStandaloneSvg(settings: PatternSettings): string {
+/**
+ * The canvas a pattern is drawn onto.
+ *
+ * @remarks
+ * The engine does not decide how large a page is or what color it has: only the
+ * caller knows that, because the caller is the one that has a page.
+ */
+export interface Canvas {
+  /** Width of the document in px. */
+  width: number;
+  /** Height of the document in px. */
+  height: number;
+  /** Color painted behind the pattern, e.g. the page background. */
+  background: string;
+}
+
+/**
+ * Renders a pattern as a self-contained SVG file: a fixed viewport so editors
+ * like Inkscape open it at a real size, a backdrop behind the pattern, and solid
+ * colors that every editor renders correctly.
+ *
+ * @remarks
+ * In a browser an `rgba()` fill is fine, but the SVG editors that people open
+ * such a file in handle it differently, so the alpha is moved out of the color
+ * into an explicit `fill-opacity` / `stroke-opacity` attribute.
+ *
+ * @param settings - The pattern to draw.
+ * @param canvas - Size and backdrop of the document.
+ * @returns The SVG markup of the file.
+ */
+export function generateStandaloneSvg(settings: PatternSettings, canvas: Canvas): string {
   const { tile, content, rotationAttr } = buildTile(settings);
-  const width = 800;
-  const height = 600;
+  const { width, height, background } = canvas;
   const initial = [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
-    `  <rect width="${width}" height="${height}" fill="#12121f"/>`,
+    `  <rect width="${width}" height="${height}" fill="${background}"/>`,
     "  <defs>",
     `    <pattern id="art" patternUnits="userSpaceOnUse" width="${tile}" height="${tile}"${rotationAttr}>`,
     `    ${content}`,

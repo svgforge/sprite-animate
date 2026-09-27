@@ -191,7 +191,8 @@ manual with JS API).
 │   ├── demo.ts             # Builds the demo page dynamically from the sprite
 │   ├── demo2.ts            # Second demo page
 │   ├── demo3.ts            # Pattern Studio page (7 seamless pattern families)
-│   ├── patterns.ts         # Seamless pattern generators used by demo3
+│   ├── pattern.ts          # The pattern engine: families + SVG rendering
+│   ├── pattern-studio.ts   # The Pattern Studio UI behind demo3.html
 │   ├── presets.ts          # Preset serialization / validation (used by demo3)
 │   └── index.ts            # Landing page
 ├── public/

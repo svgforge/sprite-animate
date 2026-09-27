@@ -201,6 +201,9 @@
     button:hover {
       background: var(--surface-hover);
     }
+    .randomize-all {
+      width: 100%;
+    }
     input[type="number"] {
       background: rgba(0, 0, 0, 0.3);
       color: var(--text);
@@ -283,6 +286,10 @@
             <output id="rotation-readout" for="rotation"></output>
             <input type="range" id="rotation" min="0" max="360" step="1">
           </div>
+
+          <button type="button" id="randomize-all" class="randomize-all">
+            🎲 Random all but opacity
+          </button>
 
           <div class="preset-block">
             <h2>Pattern file</h2>
