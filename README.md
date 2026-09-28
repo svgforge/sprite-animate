@@ -12,7 +12,7 @@ without writing a single line of JavaScript.
 
 ```bash
 pnpm install
-pnpm run dev        # Dev server on http://localhost:3000 (demo page at /demo)
+pnpm run dev        # Dev server on http://localhost:3000 (demo page at /demo1)
 pnpm run build      # Production build to dist/
 pnpm run preview    # Serve the build locally
 ```
@@ -176,7 +176,7 @@ manual with JS API).
 
 ```
 └─ dist/
-   ├─ index.html, demo.html, demo2.html, demo3.html, static/   # Demo build
+   ├─ index.html, demo1.html, demo2.html, demo3.html, demo4.html, static/   # Demo build
    └─ lib/
       └─ svg-morph.js                              # Standalone release bundle
 ```
@@ -188,9 +188,11 @@ manual with JS API).
 ```
 ├── src/
 │   ├── svg-morph.ts        # The <svg-morph> Web Component
-│   ├── demo.ts             # Builds the demo page dynamically from the sprite
+│   ├── demo1.ts            # Builds the demo page dynamically from the sprite
 │   ├── demo2.ts            # Second demo page
 │   ├── demo3.ts            # Pattern Studio page (7 seamless pattern families)
+│   ├── demo4.ts            # Endless morph page (play/pause, speed slider, path morphing shape + colour)
+│   ├── random-path.ts      # Random closed paths for the endless morph (3 looks)
 │   ├── pattern.ts          # The pattern engine: families + SVG rendering
 │   ├── pattern-studio.ts   # The Pattern Studio UI behind demo3.html
 │   ├── pattern-tiles.ts    # <pattern-tiles>: the saved presets as previews
@@ -201,9 +203,10 @@ manual with JS API).
 ├── public/
 │   ├── ico.svg          # Any number of <symbol> icons
 │   ├── index.html          # Landing page template
-│   ├── demo.html           # Demo page template
+│   ├── demo1.html          # Demo page template
 │   ├── demo2.html          # Second demo page template
 │   ├── demo3.html          # Pattern Studio page template
+│   ├── demo4.html          # Endless morph page template
 │   └── css/shared.css      # Shared stylesheet
 ├── templates/
 │   ├── header.html         # Shared header partial (injected via templateParameters)
