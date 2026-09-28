@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>svg-morph — Endless morph</title>
+    <link rel="stylesheet" href="./css/shared.css">
+    <style>
+    .hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    .morph-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      max-width: 620px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+    }
+    /* The toolbar holds the controls of the stage. It starts with the single
+       play button; everything else the animation needs lives in the page. */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 2.75rem;
+    }
+    #morph-toggle {
+      display: grid;
+      place-items: center;
+      width: 2.75rem;
+      height: 2.75rem;
+      padding: 0;
+      border-radius: 50%;
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+      cursor: pointer;
+    }
+    #morph-toggle:hover {
+      background: var(--surface-hover);
+    }
+    /* The speed slider sits next to the play button and snaps to whole seconds.
+       The readout says what the position means, in seconds. */
+    .speed {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .speed input {
+      width: 8.5rem;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+    .speed output {
+      min-width: 2.4rem;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+    #morph-toggle .icon {
+      width: 1.15rem;
+      height: 1.15rem;
+      fill: currentColor;
+    }
+    /* One button, two states: the icon that belongs to the state is the one
+       shown, so there is no second control to keep in sync. */
+    #morph-toggle[data-state="play"] .icon-pause,
+    #morph-toggle[data-state="pause"] .icon-play {
+      display: none;
+    }
+    .stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: rgba(0, 0, 0, 0.3);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+    .stage svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .stage-hint {
+      position: absolute;
+      margin: 0;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    </style>
+  </head>
+  <body>
+    <%= headerPartial %>
+
+    <main class="page">
+      <div class="page-title">
+        <h1>Endless morph</h1>
+        <p>Endless morphing between random shapes and colours, one morph at a time — from 1 to 30 seconds</p>
+      </div>
+
+      <div class="hero">
+        <div class="morph-card">
+          <div class="toolbar">
+            <button type="button" id="morph-toggle" data-state="play" aria-label="Play the morph">
+              <svg class="icon icon-play" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M8 5v14l11-7z"></path>
+              </svg>
+              <svg class="icon icon-pause" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M7 5h4v14H7zM13 5h4v14h-4z"></path>
+              </svg>
+            </button>
+
+            <label class="speed">
+              <span>Speed</span>
+              <input type="range" id="morph-speed" min="1" max="30" step="1" value="4">
+              <output id="morph-speed-value" for="morph-speed">4 s</output>
+            </label>
+          </div>
+
+          <!-- The stage holds the one path the whole cycle morphs in. -->
+          <div class="stage">
+            <svg viewBox="0 0 400 400" aria-hidden="true" focusable="false">
+              <path id="morph-path" d="" fill="var(--accent)"></path>
+            </svg>
+            <p class="stage-hint" id="stage-hint">Press play to start</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <%= footerPartial %>
+  </body>
+</html>
