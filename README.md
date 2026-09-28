@@ -193,7 +193,10 @@ manual with JS API).
 │   ├── demo3.ts            # Pattern Studio page (7 seamless pattern families)
 │   ├── pattern.ts          # The pattern engine: families + SVG rendering
 │   ├── pattern-studio.ts   # The Pattern Studio UI behind demo3.html
+│   ├── pattern-tiles.ts    # <pattern-tiles>: the saved presets as previews
+│   ├── jd-select.ts        # <jd-select>: the family chooser as a web component
 │   ├── presets.ts          # Preset serialization / validation (used by demo3)
+│   ├── default-presets.json # Presets a fresh browser starts with (loaded if nothing is stored)
 │   └── index.ts            # Landing page
 ├── public/
 │   ├── ico.svg          # Any number of <symbol> icons

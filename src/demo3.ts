@@ -4,9 +4,11 @@
 // ./pattern-studio. The studio finds every element by id, so starting it is a
 // single line.
 //
-// The family chooser is a <jd-select>; importing it defines the element, and
-// the page is free of the dropdown logic that used to be in here.
+// The family chooser is a <jd-select> and the saved patterns are a
+// <pattern-tiles>; importing them defines the elements, and the page is free of
+// the dropdown and tile logic that used to be in here.
 import "./jd-select";
+import "./pattern-tiles";
 import { mountPatternStudio } from "./pattern-studio";
 
 mountPatternStudio();

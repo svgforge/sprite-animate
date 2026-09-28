@@ -48,11 +48,18 @@ import {
   type PatternSettings,
 } from "./pattern";
 import {
+  type PatternTilesElement,
+  type PatternTilesRemoveDetail,
+  type PatternTilesSelectDetail,
+  tilesDetail,
+} from "./pattern-tiles";
+import {
+  countPresetsInFile,
+  defaultPresets,
   type Preset,
   parsePresets,
   removePreset,
   serializePresets,
-  sortPresets,
   upsertPreset,
 } from "./presets";
 
@@ -264,7 +271,7 @@ interface StudioUi {
   fileStatus: HTMLElement | null;
   presetNameInput: HTMLInputElement | null;
   presetSaveButton: HTMLButtonElement | null;
-  presetList: HTMLElement | null;
+  presetTiles: PatternTilesElement | null;
   presetExportButton: HTMLButtonElement | null;
   presetImportButton: HTMLButtonElement | null;
   presetFileInput: HTMLInputElement | null;
@@ -291,7 +298,7 @@ function createUi(root: ParentNode): StudioUi {
     fileStatus: find(root, "pattern-file-status"),
     presetNameInput: find<HTMLInputElement>(root, "preset-name"),
     presetSaveButton: find<HTMLButtonElement>(root, "preset-save"),
-    presetList: find(root, "preset-list"),
+    presetTiles: find<PatternTilesElement>(root, "preset-list"),
     presetExportButton: find<HTMLButtonElement>(root, "preset-export"),
     presetImportButton: find<HTMLButtonElement>(root, "preset-import"),
     presetFileInput: find<HTMLInputElement>(root, "preset-file"),
@@ -659,9 +666,7 @@ export class PatternStudio {
   private markChanged(): void {
     if (this.activePresetName === null) return;
     this.activePresetName = null;
-    this.ui.presetList?.querySelectorAll(".preset-item.active").forEach((element) => {
-      element.classList.remove("active");
-    });
+    if (this.ui.presetTiles) this.ui.presetTiles.active = null;
   }
 
   // --- Wiring --------------------------------------------------------------
@@ -723,6 +728,20 @@ export class PatternStudio {
       this.savePreset();
     });
 
+    // The tiles only report what was picked or deleted; the studio keeps the
+    // presets and knows what to do with either.
+    const presetTiles = ui.presetTiles;
+    if (presetTiles) {
+      presetTiles.addEventListener("select", (event) => {
+        const { preset } = tilesDetail<PatternTilesSelectDetail>(event);
+        this.applyPreset(preset);
+      });
+      presetTiles.addEventListener("remove", (event) => {
+        const { name } = tilesDetail<PatternTilesRemoveDetail>(event);
+        this.deletePreset(name);
+      });
+    }
+
     ui.presetExportButton?.addEventListener("click", () => {
       this.exportPresets();
     });
@@ -743,17 +762,50 @@ export class PatternStudio {
 
   // --- Preset storage ------------------------------------------------------
 
+  /**
+   * The stored presets of this browser, as they stand, when this build could not
+   * read all of them.
+   *
+   * @remarks
+   * Stored data is the only copy of a saved pattern, so it is never written over
+   * with a shorter list: the presets that could not be read would be gone for
+   * good. As long as this is set, saving and deleting say so instead of storing
+   * anything.
+   */
+  private unreadablePresets: string | null = null;
+
   private loadPresets(): void {
     try {
       const raw = window.localStorage.getItem(PRESET_STORAGE_KEY);
-      if (!raw) return;
+      // A browser that has never stored presets starts with the ones the project
+      // ships — and keeps them like any other preset, so that deleting them
+      // really empties the list instead of bringing them back on the next visit.
+      if (!raw) {
+        this.presets = defaultPresets();
+        this.persistPresets();
+        return;
+      }
       this.presets = parsePresets(raw) ?? [];
+      const stored = countPresetsInFile(raw);
+      if (stored !== null && this.presets.length < stored) this.unreadablePresets = raw;
     } catch {
-      this.presets = [];
+      // Without storage the shipped presets are still worth showing, they just
+      // cannot be kept.
+      this.presets = defaultPresets();
+      this.setStatus("Storage unavailable — export your presets to keep them.");
+    }
+    if (this.unreadablePresets !== null) {
+      this.setStatus(
+        `Presets are stored in this browser, but this page could only read part of them — "${PRESET_STORAGE_KEY}" was left exactly as it is.`,
+      );
     }
   }
 
   private persistPresets(): void {
+    if (this.unreadablePresets !== null) {
+      this.setStatus("Nothing stored — the stored presets were left untouched.");
+      return;
+    }
     try {
       window.localStorage.setItem(PRESET_STORAGE_KEY, serializePresets(this.presets));
     } catch {
@@ -761,36 +813,19 @@ export class PatternStudio {
     }
   }
 
+  /**
+   * Hands the tiles the saved patterns and the one the settings came from.
+   *
+   * @remarks
+   * The tiles draw themselves from the settings: a pattern is fully decided by
+   * them, so a pattern that was saved before the tiles existed shows up as a
+   * preview like any other, with nothing to bring along and nothing to re-save.
+   */
   private renderPresetList(): void {
-    const list = this.ui.presetList;
-    if (!list) return;
-    list.innerHTML = "";
-
-    for (const preset of sortPresets(this.presets)) {
-      const row = document.createElement("div");
-      row.className = "preset-item";
-      if (preset.name === this.activePresetName) row.classList.add("active");
-
-      const loadButton = document.createElement("button");
-      loadButton.type = "button";
-      loadButton.className = "preset-name-btn";
-      loadButton.textContent = preset.name;
-      loadButton.addEventListener("click", () => {
-        this.applyPreset(preset);
-      });
-
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.className = "preset-delete";
-      deleteButton.textContent = "✕";
-      deleteButton.setAttribute("aria-label", `Delete preset ${preset.name}`);
-      deleteButton.addEventListener("click", () => {
-        this.deletePreset(preset.name);
-      });
-
-      row.append(loadButton, deleteButton);
-      list.append(row);
-    }
+    const tiles = this.ui.presetTiles;
+    if (!tiles) return;
+    tiles.presets = this.presets;
+    tiles.active = this.activePresetName;
   }
 
   // --- Status lines --------------------------------------------------------

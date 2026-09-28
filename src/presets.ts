@@ -14,6 +14,7 @@
  * const stored = JSON.stringify(serializePresets(presets));
  * ```
  */
+import defaultPresetFile from "./default-presets.json";
 import { FAMILY_BY_ID, type FamilyId, type PatternSettings } from "./pattern";
 
 /**
@@ -31,6 +32,20 @@ export interface Preset {
  * format can be told apart from this one.
  */
 export const PRESET_FILE_VERSION = 1;
+
+/**
+ * The presets the project ships, read from `default-presets.json`.
+ *
+ * @remarks
+ * The shipped file is a preset file like any other, so it goes through the same
+ * {@link parsePresets}: the starting set is validated like stored data, and a
+ * broken entry in it never reaches the page.
+ *
+ * @returns The presets of the file, or an empty list if it holds none.
+ */
+export function defaultPresets(): Preset[] {
+  return parsePresets(JSON.stringify(defaultPresetFile)) ?? [];
+}
 
 /**
  * Returns the presets sorted by name, so that a list and an export file have a
@@ -74,6 +89,31 @@ export function removePreset(presets: Preset[], name: string): Preset[] {
  */
 export function serializePresets(presets: Preset[]): string {
   return JSON.stringify({ version: PRESET_FILE_VERSION, presets: sortPresets(presets) }, null, 2);
+}
+
+/**
+ * Counts the presets a stored text claims to hold.
+ *
+ * @remarks
+ * {@link parsePresets} answers with the presets it could read, and drops the ones
+ * it could not — a family that no longer exists, a value that is not a number.
+ * This only counts what the text says is in there, which is what a caller needs
+ * to notice that a list is shorter than the file it came from, and to write
+ * nothing back over that file.
+ *
+ * @param json - The file content.
+ * @returns How many presets the text holds, or `null` if it is not a preset file.
+ */
+export function countPresetsInFile(json: string): number | null {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return null;
+  }
+  if (typeof parsed !== "object" || parsed === null) return null;
+  const list = (parsed as { presets?: unknown }).presets;
+  return Array.isArray(list) ? list.length : null;
 }
 
 /**

@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "presets": [
+    {
+      "name": "Dots calm",
+      "settings": {
+        "family": "dots",
+        "seed": 1337,
+        "density": 10,
+        "size": 220,
+        "opacity": 1,
+        "colors": 3,
+        "hue": 190,
+        "rotation": 0
+      }
+    },
+    {
+      "name": "Waves deep",
+      "settings": {
+        "family": "waves",
+        "seed": 24601,
+        "density": 12,
+        "size": 240,
+        "opacity": 0.9,
+        "colors": 2,
+        "hue": 210,
+        "rotation": 0
+      }
+    },
+    {
+      "name": "Chevrons warm",
+      "settings": {
+        "family": "chevrons",
+        "seed": 7,
+        "density": 6,
+        "size": 200,
+        "opacity": 1,
+        "colors": 2,
+        "hue": 25,
+        "rotation": 0
+      }
+    },
+    {
+      "name": "Bullseye bright",
+      "settings": {
+        "family": "bullseye",
+        "seed": 99,
+        "density": 4,
+        "size": 260,
+        "opacity": 1,
+        "colors": 3,
+        "hue": 300,
+        "rotation": 0
+      }
+    },
+    {
+      "name": "Handdrawn rough",
+      "settings": {
+        "family": "handdrawn",
+        "seed": 512,
+        "density": 40,
+        "size": 180,
+        "opacity": 0.8,
+        "colors": 2,
+        "hue": 45,
+        "rotation": 0
+      }
+    }
+  ]
+}

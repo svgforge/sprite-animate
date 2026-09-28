@@ -63,6 +63,13 @@
       gap: 1.25rem;
       backdrop-filter: blur(16px) saturate(1.5);
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+      /* The editable surfaces of the card. They sit *above* the card, not below
+         it: a field darker than its surroundings reads as a hole, a lighter one
+         reads as something you can type into. One set of values, so the plain
+         fields and the family chooser cannot drift apart. */
+      --field-bg: rgba(255, 255, 255, 0.07);
+      --field-bg-hover: rgba(255, 255, 255, 0.11);
+      --field-border: rgba(255, 255, 255, 0.16);
     }
     .control-card h2 {
       margin: 0;
@@ -97,6 +104,10 @@
     jd-select {
       grid-column: 1 / -1;
       --jd-select-accent: var(--pattern-accent, var(--accent));
+      /* The chooser is a field of the card, so it takes the card's field values. */
+      --jd-select-background: var(--field-bg);
+      --jd-select-surface-hover: var(--field-bg-hover);
+      --jd-select-border: var(--field-border);
     }
     .family-desc {
       margin: -0.5rem 0 0;
@@ -119,47 +130,8 @@
       flex: 1;
       min-width: 0;
     }
-    .preset-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0.35rem;
-    }
-    .preset-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.3rem 0.5rem;
-    }
-    .preset-item.active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-    }
-    .preset-name-btn {
-      flex: 1;
-      text-align: left;
-      background: none;
-      border: none;
-      color: var(--text);
-      font-size: 0.85rem;
-      padding: 0.15rem 0;
-      cursor: pointer;
-    }
-    .preset-name-btn:hover {
-      color: var(--accent);
-    }
-    .preset-delete {
-      background: none;
-      border: none;
-      color: var(--text-muted);
-      font-size: 0.9rem;
-      padding: 0.15rem 0.3rem;
-      cursor: pointer;
-    }
-    .preset-delete:hover {
-      color: #ff6b6b;
+    pattern-tiles {
+      --pattern-tiles-accent: var(--pattern-accent, var(--accent));
     }
     .preset-actions {
       display: flex;
@@ -201,13 +173,36 @@
     .randomize-all {
       width: 100%;
     }
-    input[type="number"] {
-      background: rgba(0, 0, 0, 0.3);
+    /* The editable fields of the card, raised above it. A form field inherits no
+       font of its own, so the font is named here as well. */
+    input[type="number"],
+    input[type="text"],
+    textarea {
+      background: var(--field-bg);
       color: var(--text);
-      border: 1px solid var(--border);
+      border: 1px solid var(--field-border);
       border-radius: 6px;
-      padding: 0.4rem 0.5rem;
+      padding: 0.4rem 0.55rem;
+      font-family: inherit;
       font-size: 0.85rem;
+    }
+    input[type="number"]::placeholder,
+    input[type="text"]::placeholder,
+    textarea::placeholder {
+      color: var(--text-muted);
+      opacity: 1;
+    }
+    input[type="number"]:hover,
+    input[type="text"]:hover,
+    textarea:hover {
+      background: var(--field-bg-hover);
+      border-color: color-mix(in srgb, var(--pattern-accent, var(--accent)) 45%, var(--field-border));
+    }
+    input[type="number"]:focus-visible,
+    input[type="text"]:focus-visible,
+    textarea:focus-visible {
+      outline: 2px solid var(--pattern-accent, var(--accent));
+      outline-offset: 2px;
     }
     .page-title {
       text-align: center;
@@ -309,7 +304,11 @@
               <input type="text" id="preset-name" placeholder="Preset name" aria-label="Preset name">
               <button type="button" id="preset-save">Save</button>
             </div>
-            <div class="preset-list" id="preset-list"></div>
+            <!-- The saved patterns as small tiles: every tile draws the pattern
+                 it stands for, and its name comes up on hover. The element draws
+                 itself, so the studio only hands it the patterns and listens
+                 for what is picked. -->
+            <pattern-tiles id="preset-list"></pattern-tiles>
             <div class="preset-actions">
               <button type="button" id="preset-export">Export</button>
               <button type="button" id="preset-import">Import</button>

@@ -17,6 +17,11 @@ Component** (`<svg-morph>`), built with **GSAP MorphSVGPlugin** + **RSBuild**
 - **Clean, clear, human-readable code:** simple and direct structures, no
   cryptic one-liners, one thought per line. Keep changes minimal-invasive.
 - **No scope creep:** only do what the task asks for.
+- **NEVER commit before the user has tested the change.** Leave finished work
+  in the working tree and let the user look at it, run it, approve it. Commit
+  only when they say so, or when they ask for a commit. Test results from the
+  agent are no substitute for the user having tried it themselves. This rule
+  stands even if a task looks finished, bug-free or "ready to ship".
 
 ## Commands
 

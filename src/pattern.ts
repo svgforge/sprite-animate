@@ -713,6 +713,50 @@ export function generatePattern(settings: PatternSettings): string {
   ].join("\n");
 }
 
+/**
+ * How many pattern repeats a thumbnail shows across its width.
+ *
+ * @remarks
+ * A preview that shows less than a full repeat is a crop that says little about
+ * the pattern, and one that shows many only reads as noise. Two repeats is the
+ * range in which the structure of a family is recognizable at a glance.
+ */
+const THUMBNAIL_REPEATS = 2;
+
+/**
+ * Renders a pattern as a small square preview, for a tile in a list of presets.
+ *
+ * @remarks
+ * The preview is a scaled-down window onto the same pattern, not a smaller
+ * pattern: the document keeps its size and the field behind it is scaled, so a
+ * thumbnail looks like the background it stands for. Scaling and rotating the
+ * whole field keeps the tile seamless, the same way the live background does.
+ *
+ * @param settings - The pattern to draw.
+ * @param size - Edge length of the square in px. Defaults to 72.
+ * @returns The SVG markup of the preview.
+ *
+ * @example
+ * ```ts
+ * image.src = `data:image/svg+xml,${encodeURIComponent(generateThumbnail(settings))}`;
+ * ```
+ */
+export function generateThumbnail(settings: PatternSettings, size = 72): string {
+  const { tile, content } = buildTile(settings);
+  const zoom = size / (tile * THUMBNAIL_REPEATS);
+  const rotation = settings.rotation === 0 ? "" : ` rotate(${settings.rotation})`;
+  return [
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`,
+    "  <defs>",
+    `    <pattern id="thumb" patternUnits="userSpaceOnUse" width="${tile}" height="${tile}" patternTransform="scale(${fmt(zoom)})${rotation}">`,
+    `    ${content}`,
+    "    </pattern>",
+    "  </defs>",
+    `  <rect width="${size}" height="${size}" fill="url(#thumb)"/>`,
+    "</svg>",
+  ].join("\n");
+}
+
 /** Split an rgba() color into a solid rgb() color plus its alpha. */
 function splitRgba(value: string): { rgb: string; alpha: number } | null {
   const match = /^rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)$/.exec(value);
