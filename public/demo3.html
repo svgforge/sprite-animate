@@ -239,10 +239,10 @@
                  studio brings its own: <jd-select> is a select with a list that
                  stays in the page. It takes the same options, the same events
                  and the same keyboard as the original; the studio fills the
-                 options in and sets the family. -->
+                 options in and sets the pattern that is drawn. -->
             <jd-select id="pattern"></jd-select>
           </div>
-          <p class="family-desc" id="family-desc"></p>
+          <p class="family-desc" id="pattern-desc"></p>
 
           <div class="seed-row">
             <input type="number" id="seed" min="0" step="1" aria-label="Pattern seed">
@@ -256,7 +256,7 @@
           </div>
 
           <div class="field">
-            <label for="size">Tile size</label>
+            <label for="size" id="size-label">Tile size</label>
             <output id="size-readout" for="size"></output>
             <input type="range" id="size" min="40" max="400" step="10">
           </div>
@@ -279,11 +279,18 @@
             <input type="range" id="hue" min="0" max="360" step="1">
           </div>
 
+          <!-- Every pattern has these six sliders, none of them hidden, so
+               switching between two patterns never moves anything around. -->
           <div class="field">
             <label for="rotation">Rotation</label>
             <output id="rotation-readout" for="rotation"></output>
             <input type="range" id="rotation" min="0" max="360" step="1">
           </div>
+
+          <!-- The controls of the chosen pattern are built into here, because
+               every pattern brings its own: a slider for a number, a chooser for
+               a fixed list of values. -->
+          <div id="pattern-fields"></div>
 
           <button type="button" id="randomize-all" class="randomize-all">
             🎲 Random all but opacity

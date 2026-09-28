@@ -6,7 +6,13 @@
  * settings, drives the controls and the presets, and shows what the pattern
  * engine returns — it never draws a pattern itself, so the drawing in
  * `./pattern` stays free of the page. The names, descriptions and canvas of a
- * family live here, because this is where they are shown.
+ * pattern live here, because this is where they are shown, and so do the labels
+ * of the controls a pattern brings for itself.
+ *
+ * The card has two kinds of fields: the sliders every pattern shares, which are
+ * in the markup, and the controls of the active pattern, which the studio builds
+ * from what that pattern declares. So a pattern brings its own controls into a
+ * card it did not have to know about.
  *
  * Every element is looked up by id inside a root, so a page only has to provide
  * the markup, and the studio can also be mounted into a part of a page.
@@ -36,16 +42,21 @@
  * const svg = generateStandaloneSvg(studio.currentSettings, canvas);
  * ```
  */
-import type { JDSelectElement } from "./jd-select";
+import type { JDOptionElement, JDSelectElement } from "./jd-select";
 import {
   type Canvas,
+  type ChoiceControl,
+  type Control,
   DEFAULT_SETTINGS,
   FAMILIES,
   FAMILY_BY_ID,
+  type Family,
   type FamilyId,
   generatePattern,
   generateStandaloneSvg,
   type PatternSettings,
+  type RangeControl,
+  readExtra,
 } from "./pattern";
 import {
   type PatternTilesElement,
@@ -66,46 +77,114 @@ import {
 const PRESET_STORAGE_KEY = "sprite-amimate.pattern-studio.presets";
 
 /**
- * The words the control card shows for a family. The engine knows only the
- * numeric side of a family, so the texts live here with the code that renders
- * them. A Record over the family ids makes a missing text a compile error.
+ * The words the control card shows for a pattern. The engine knows only the
+ * numeric side of a pattern, so the texts live here with the code that renders
+ * them. A Record over the pattern ids makes a missing text a compile error.
  */
-const FAMILY_TEXTS: Record<FamilyId, { label: string; description: string; density: string }> = {
+const FAMILY_TEXTS: Record<
+  FamilyId,
+  { label: string; description: string; density: string; size: string }
+> = {
   dots: {
     label: "Dots / halftone",
     description: "Two staggered dot grids with a halftone-like size wash.",
     density: "Dots per row",
+    size: "Tile size",
   },
   triangles: {
     label: "Triangles / tessellation",
     description: "Half-square triangles in a checkerboard prism tessellation.",
     density: "Cells per row",
+    size: "Tile size",
   },
   waves: {
     label: "Waves / topography",
     description: "Stacked sine waves with individual phases and line colors.",
     density: "Wave lines",
+    size: "Tile size",
   },
   chevrons: {
     label: "Chevrons / stripes",
     description: "Chevron arrows in a herringbone weave with a diagonal color flow.",
     density: "Arrows per row",
+    size: "Tile size",
   },
   bullseye: {
     label: "Concentric / bullseye",
     description: "Concentric rings centered at the tile quarter points.",
     density: "Rings per bullseye",
+    size: "Tile size",
   },
   rhombus: {
     label: "Rhombus / lattice",
     description: "Diamond outlines with filled diamonds on alternating nodes.",
     density: "Diamonds per row",
+    size: "Tile size",
   },
   handdrawn: {
     label: "Hand-drawn",
     description: "Imperfect rings, triangles, squiggles and dabs — like doodles.",
     density: "Shapes per tile",
+    size: "Tile size",
   },
+  polka: {
+    label: "Polka picture",
+    description: "A single picture: a gradient or a figure resolved into dots.",
+    density: "Dots per row",
+    size: "Picture size",
+  },
+};
+
+/**
+ * The words for a control a pattern brings for itself, by the control's key.
+ */
+const CONTROL_TEXTS: Record<string, string> = {
+  source: "Source",
+  layout: "Dot layout",
+  weight: "Dot weight",
+  floor: "Smallest dot",
+  angle: "Gradient angle",
+  softness: "Edge softness",
+  wash: "Soften",
+};
+
+/**
+ * The words for a value a pattern offers in a chooser, by the value itself.
+ */
+const CHOICE_TEXTS: Record<string, { label: string; description?: string }> = {
+  // What the dots of a polka picture trace.
+  linearLeft: {
+    label: "Gradient across",
+    description: "A gradient running from the left edge to the right edge.",
+  },
+  linearAngle: {
+    label: "Gradient at an angle",
+    description: "The same gradient, turned by the angle below.",
+  },
+  radial: {
+    label: "Radial gradient",
+    description: "A gradient from the middle out to the rim, bright in the centre.",
+  },
+  circle: {
+    label: "Disc",
+    description: "A filled circle in the middle, the dots fading out at its rim.",
+  },
+  ring: {
+    label: "Ring",
+    description: "A bright rim around an empty middle.",
+  },
+  heart: {
+    label: "Heart",
+    description: "A heart: two lobes above, a point below.",
+  },
+  wave: {
+    label: "Waves",
+    description: "Diagonal stripes, so the picture reads as movement.",
+  },
+  // How those dots are placed.
+  grid: { label: "Grid" },
+  hex: { label: "Hex" },
+  scatter: { label: "Scatter" },
 };
 
 interface FieldSpec {
@@ -117,10 +196,16 @@ interface FieldSpec {
 }
 
 /**
- * The sliders of the control card, in the order of the markup. Input and
- * readout ids follow the key, so a new parameter is one line here plus one
- * field in the HTML: the wiring, the syncing and the randomize pass all read
- * this single list.
+ * The sliders every pattern shares, in the order of the markup. Input and
+ * readout ids follow the key, so a new parameter is one line here plus one field
+ * in the HTML: the wiring, the syncing and the randomize pass all read this
+ * single list.
+ *
+ * @remarks
+ * Every pattern gets the same sliders, none of them hidden — a control that comes
+ * and goes would make switching between two patterns a small surprise. The
+ * controls a pattern brings for itself are not in here: the pattern declares
+ * those itself, and the card is built from that declaration.
  */
 const FIELDS: FieldSpec[] = [
   { key: "count", random: true },
@@ -204,7 +289,7 @@ export class Slider {
   readonly input: HTMLInputElement | null;
   private readonly readout: HTMLOutputElement | null;
 
-  constructor(root: ParentNode, key: SliderKey) {
+  constructor(root: ParentNode, key: string) {
     this.input = find<HTMLInputElement>(root, key);
     this.readout = find<HTMLOutputElement>(root, `${key}-readout`);
   }
@@ -260,9 +345,12 @@ export class Slider {
  */
 interface StudioUi {
   background: HTMLElement | null;
-  familySelect: JDSelectElement | null;
-  familyDescription: HTMLElement | null;
+  patternSelect: JDSelectElement | null;
+  patternDescription: HTMLElement | null;
   densityLabel: HTMLElement | null;
+  sizeLabel: HTMLElement | null;
+  // Where the controls of the active pattern are built.
+  patternFields: HTMLElement | null;
   seedInput: HTMLInputElement | null;
   randomSeedButton: HTMLButtonElement | null;
   randomizeButton: HTMLButtonElement | null;
@@ -287,9 +375,11 @@ function createUi(root: ParentNode): StudioUi {
 
   return {
     background: find(root, "pattern-bg"),
-    familySelect: find<JDSelectElement>(root, "pattern"),
-    familyDescription: find(root, "family-desc"),
+    patternSelect: find<JDSelectElement>(root, "pattern"),
+    patternDescription: find(root, "pattern-desc"),
     densityLabel: find(root, "density-label"),
+    sizeLabel: find(root, "size-label"),
+    patternFields: find(root, "pattern-fields"),
     seedInput: find<HTMLInputElement>(root, "seed"),
     randomSeedButton: find<HTMLButtonElement>(root, "seed-random"),
     randomizeButton: find<HTMLButtonElement>(root, "randomize-all"),
@@ -331,6 +421,11 @@ export class PatternStudio {
 
   private settings: PatternSettings = { ...DEFAULT_SETTINGS };
 
+  // The controls of the active pattern, as they were built into the card.
+  private controls: Control[] = [];
+  private rangeControls = new Map<string, Slider>();
+  private choiceControls = new Map<string, JDSelectElement>();
+
   // The saved presets, and the one the current settings came from.
   private presets: Preset[] = [];
   private activePresetName: string | null = null;
@@ -356,11 +451,13 @@ export class PatternStudio {
    * @returns A copy, so a caller cannot change the studio behind its back.
    */
   get currentSettings(): PatternSettings {
-    return { ...this.settings };
+    // The control values are a bag of their own, and they are handed out as a
+    // copy of that as well.
+    return { ...this.settings, extra: { ...this.settings.extra } };
   }
 
   /**
-   * Puts the studio to work: reads the stored presets, fills the family select,
+   * Puts the studio to work: reads the stored presets, fills the pattern select,
    * connects the card and paints the first pattern.
    *
    * @remarks
@@ -369,7 +466,7 @@ export class PatternStudio {
    */
   start(): void {
     this.loadPresets();
-    this.fillFamilySelect();
+    this.fillPatternSelect();
     this.applyFamily();
     this.connect();
     this.render();
@@ -395,9 +492,15 @@ export class PatternStudio {
     for (const field of FIELDS) {
       this.ui.sliders[field.key].value = this.readSlider(field.key);
     }
+    for (const [key, slider] of this.rangeControls) {
+      slider.value = Number(this.settings.extra[key] ?? 0);
+    }
+    for (const [key, select] of this.choiceControls) {
+      select.value = String(this.settings.extra[key] ?? "");
+    }
 
-    // Let the dialog accent follow the current pattern hue. On <html> it
-    // inherits down into every part of the page.
+    // Let the dialog accent follow the current hue. On <html> it inherits down
+    // into every part of the page.
     document.documentElement.style.setProperty(
       "--pattern-accent",
       `hsl(${this.settings.hue} 90% 65%)`,
@@ -405,7 +508,7 @@ export class PatternStudio {
   }
 
   /**
-   * Switches to another family and resets the density to that family's default.
+   * Switches to another pattern and resets the numbers that belong to it.
    *
    * @param id - The family to draw with.
    */
@@ -420,9 +523,9 @@ export class PatternStudio {
    * Takes over a complete set of settings, for example from a preset or a file.
    *
    * @remarks
-   * Unlike {@link PatternStudio.setFamily | setFamily} this keeps the density
-   * that comes with the settings, so loading a preset restores it instead of
-   * overwriting it with the family default.
+   * Unlike {@link PatternStudio.setFamily | setFamily} this keeps the numbers
+   * that come with the settings, so loading a preset restores them instead of
+   * overwriting them with the defaults of the pattern.
    *
    * @param settings - The settings to take over.
    */
@@ -436,31 +539,35 @@ export class PatternStudio {
    * Draws a new pattern at random.
    *
    * @remarks
-   * The family comes first, because it defines the range of the density slider;
-   * then the seed and every field that opts in — all of them read from the range
-   * their own slider offers. The opacity is left alone on purpose: it says how
-   * strongly the pattern should read against the page, not what it is.
+   * The pattern comes first, because it brings the ranges and the controls of
+   * everything below it; then the seed, the shared sliders that opt in and the
+   * controls of the pattern itself. Every number is read from the range its own
+   * control offers. The opacity is left alone on purpose: it says how strongly
+   * the pattern should read against the page, not what it is.
    */
   randomize(): void {
-    this.markChanged();
-
-    const family = FAMILIES[Math.floor(Math.random() * FAMILIES.length)];
-    this.settings.family = family.id;
-    this.applyFamily();
-
+    this.setFamily(FAMILIES[Math.floor(Math.random() * FAMILIES.length)].id);
     this.settings.seed = randomSeed();
     for (const field of FIELDS) {
       if (!field.random) continue;
       this.writeSlider(field.key, this.ui.sliders[field.key].randomValue());
     }
-
+    for (const control of this.controls) {
+      if (control.kind === "range") {
+        this.settings.extra[control.key] =
+          this.rangeControls.get(control.key)?.randomValue() ?? control.start;
+        continue;
+      }
+      const value = control.values[Math.floor(Math.random() * control.values.length)];
+      this.settings.extra[control.key] = value ?? control.start;
+    }
     this.render();
   }
 
   // --- Pattern file --------------------------------------------------------
 
   /**
-   * The pattern as a standalone file, on the canvas the page asks for.
+   * The picture as a standalone file.
    */
   private standaloneSvg(): string {
     return generateStandaloneSvg(this.settings, exportCanvas());
@@ -470,14 +577,15 @@ export class PatternStudio {
    * Downloads the current pattern as an SVG file.
    */
   downloadSvg(): void {
+    const name = `${this.settings.family}.svg`;
     const blob = new Blob([this.standaloneSvg()], { type: "image/svg+xml" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "pattern.svg";
+    link.download = name;
     link.click();
     URL.revokeObjectURL(url);
-    this.setFileStatus("Downloaded pattern.svg.");
+    this.setFileStatus(`Downloaded ${name}.`);
   }
 
   /**
@@ -502,7 +610,7 @@ export class PatternStudio {
    * @param preset - The preset to load.
    */
   applyPreset(preset: Preset): void {
-    this.applySettings({ ...preset.settings });
+    this.applySettings({ ...preset.settings, extra: { ...preset.settings.extra } });
     this.activePresetName = preset.name;
     this.renderPresetList();
     this.setStatus(`Loaded preset "${preset.name}".`);
@@ -522,10 +630,8 @@ export class PatternStudio {
     const given = (name ?? this.ui.presetNameInput?.value ?? "").trim();
     const presetName = given || `Preset ${this.presets.length + 1}`;
     const updated = this.presets.some((preset) => preset.name === presetName);
-    this.presets = upsertPreset(this.presets, {
-      name: presetName,
-      settings: this.currentSettings,
-    });
+    const preset: Preset = { name: presetName, settings: this.currentSettings };
+    this.presets = upsertPreset(this.presets, preset);
     this.persistPresets();
     this.renderPresetList();
     if (this.ui.presetNameInput) this.ui.presetNameInput.value = "";
@@ -604,9 +710,10 @@ export class PatternStudio {
   // --- Settings <-> card ---------------------------------------------------
 
   /**
-   * The sliders do not all drive a setting of the same name: the density slider
-   * writes `density`, whose range comes from the family, and the two counts are
-   * whole numbers. This is the only place that knows about it.
+   * The sliders do not all drive a setting of the same name — the density is
+   * counted in the unit of the pattern, so its slider is called `count` — and
+   * the two counts are whole numbers. This is the only place that knows about
+   * either of that.
    */
   private readSlider(key: SliderKey): number {
     if (key === "count") return this.settings.density;
@@ -616,50 +723,147 @@ export class PatternStudio {
   private writeSlider(key: SliderKey, value: number): void {
     if (key === "count") {
       this.settings.density = Math.round(value);
-    } else if (key === "colors") {
-      this.settings.colors = Math.round(value);
-    } else {
-      this.settings[key] = value;
+      return;
     }
+    if (key === "colors") {
+      this.settings.colors = Math.round(value);
+      return;
+    }
+    this.settings[key] = value;
+  }
+
+  /** The family the settings name, falling back to the first one. */
+  private family(): Family {
+    return FAMILY_BY_ID.get(this.settings.family) ?? FAMILIES[0];
   }
 
   /**
-   * Apply the current family to the card: its texts and the range of the density
-   * slider. `resetDensity` restores the family default, which is what switching
-   * the family does - loading a preset keeps its stored density.
+   * Puts the active pattern onto the card: its words, the range of the two
+   * sliders whose numbers belong to it, and the controls it brings.
+   *
+   * @param reset - Restores the defaults of the pattern, which is what switching
+   *   to another pattern does - loading a preset keeps the numbers it brings.
    */
-  private applyFamily(resetDensity = true): void {
-    const family = FAMILY_BY_ID.get(this.settings.family) ?? FAMILIES[0];
+  private applyFamily(reset = true): void {
+    const family = this.family();
     const text = FAMILY_TEXTS[family.id];
-    if (this.ui.familySelect) this.ui.familySelect.value = family.id;
-    if (this.ui.familyDescription) this.ui.familyDescription.textContent = text.description;
+    if (this.ui.patternSelect) this.ui.patternSelect.value = family.id;
+    if (this.ui.patternDescription) this.ui.patternDescription.textContent = text.description;
     if (this.ui.densityLabel) this.ui.densityLabel.textContent = text.density;
-    this.ui.sliders.count.setRange(family.densityMin, family.densityMax, family.densityStep);
+    if (this.ui.sizeLabel) this.ui.sizeLabel.textContent = text.size;
+    this.ui.sliders.count.setRange(family.density.min, family.density.max, family.density.step);
+    this.ui.sliders.size.setRange(family.size.min, family.size.max, family.size.step);
 
-    if (resetDensity) this.settings.density = family.densityDefault;
+    if (reset) this.settings.density = family.densityDefault;
+    this.settings.extra = readExtra(family, reset ? undefined : this.settings.extra);
+    this.buildControls(family);
   }
 
   /**
-   * Puts one `<jd-option>` per family into the chooser.
+   * Builds the controls the active pattern brings for itself into the card.
    *
    * @remarks
-   * The families and their texts are joined here, because the engine knows
-   * only the numeric side of a family. The chooser takes them from its markup
-   * the way a native select does; it draws its own list and keeps the current
-   * one chosen.
+   * A range control becomes a slider and a choice control becomes a chooser, the
+   * same way the shared fields of the card are built — only that the pattern
+   * decides which ones there are. They are built again whenever another pattern
+   * is chosen, because every pattern brings its own.
    */
-  private fillFamilySelect(): void {
-    const select = this.ui.familySelect;
+  private buildControls(family: Family): void {
+    this.controls = [...family.controls];
+    this.rangeControls.clear();
+    this.choiceControls.clear();
+    const host = this.ui.patternFields;
+    if (!host) return;
+    host.replaceChildren(...this.controls.map((control) => this.buildControl(control)));
+  }
+
+  /** One field of the card, for one control of the active pattern. */
+  private buildControl(control: Control): HTMLElement {
+    const field = document.createElement("div");
+    field.className = "field";
+    const label = document.createElement("label");
+    label.setAttribute("for", control.key);
+    label.textContent = CONTROL_TEXTS[control.key] ?? control.key;
+    field.append(label);
+    if (control.kind === "range") {
+      field.append(this.buildRangeControl(field, control));
+      return field;
+    }
+    field.append(this.buildChoiceControl(control));
+    return field;
+  }
+
+  /** The slider of a range control, wired to the settings of the pattern. */
+  private buildRangeControl(field: HTMLElement, control: RangeControl): HTMLInputElement {
+    const readout = document.createElement("output");
+    readout.id = `${control.key}-readout`;
+    readout.setAttribute("for", control.key);
+    const input = document.createElement("input");
+    input.type = "range";
+    input.id = control.key;
+    input.min = String(control.range.min);
+    input.max = String(control.range.max);
+    input.step = String(control.range.step);
+    field.append(readout, input);
+    const slider = new Slider(field, control.key);
+    slider.onInput((value) => {
+      this.writeExtra(control.key, value);
+    });
+    this.rangeControls.set(control.key, slider);
+    return input;
+  }
+
+  /** The chooser of a choice control, wired to the settings of the pattern. */
+  private buildChoiceControl(control: ChoiceControl): JDSelectElement {
+    const select = document.createElement("jd-select");
+    select.id = control.key;
+    select.replaceChildren(
+      ...control.values.map((value) =>
+        this.makeOption(
+          value,
+          CHOICE_TEXTS[value]?.label ?? value,
+          CHOICE_TEXTS[value]?.description,
+        ),
+      ),
+    );
+    select.addEventListener("change", () => {
+      this.writeExtra(control.key, select.value);
+    });
+    this.choiceControls.set(control.key, select);
+    return select;
+  }
+
+  /** A change to a control of the active pattern, into the settings. */
+  private writeExtra(key: string, value: number | string): void {
+    this.markChanged();
+    this.settings.extra[key] = value;
+    this.render();
+  }
+
+  /**
+   * Puts one `<jd-option>` per pattern into the pattern chooser.
+   *
+   * @remarks
+   * The chooser takes its options from the markup the way a native select does;
+   * it draws its own list and keeps the current one chosen. The patterns and
+   * their texts are joined here, because the engine knows only the numeric side.
+   */
+  private fillPatternSelect(): void {
+    const select = this.ui.patternSelect;
     if (!select) return;
     const options = FAMILIES.map((family) => {
       const text = FAMILY_TEXTS[family.id];
-      const option = document.createElement("jd-option");
-      option.value = family.id;
-      option.setAttribute("description", text.description);
-      option.textContent = text.label;
-      return option;
+      return this.makeOption(family.id, text.label, text.description);
     });
     select.replaceChildren(...options);
+  }
+
+  private makeOption(value: string, label: string, description?: string): JDOptionElement {
+    const option = document.createElement("jd-option");
+    option.value = value;
+    if (description) option.setAttribute("description", description);
+    option.textContent = label;
+    return option;
   }
 
   /** A manual edit means the settings no longer match the active preset. */
@@ -680,9 +884,9 @@ export class PatternStudio {
 
     // The chooser speaks the words of a native select: it fires `change` when
     // the user picks something, and stays quiet when the value is set from
-    // script - which is how the family default and the presets work.
-    ui.familySelect?.addEventListener("change", () => {
-      const chosen = ui.familySelect?.value ?? "";
+    // script - which is how the pattern defaults and the presets work.
+    ui.patternSelect?.addEventListener("change", () => {
+      const chosen = ui.patternSelect?.value ?? "";
       if (FAMILY_BY_ID.has(chosen as FamilyId)) this.setFamily(chosen as FamilyId);
     });
 

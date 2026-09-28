@@ -2,68 +2,311 @@
   "version": 1,
   "presets": [
     {
-      "name": "Dots calm",
+      "name": "dfgfdgdgdgdg",
       "settings": {
-        "family": "dots",
+        "family": "rhombus",
+        "seed": 2876797807,
+        "density": 6,
+        "size": 380,
+        "opacity": 1,
+        "colors": 1,
+        "hue": 144,
+        "rotation": 26,
+        "extra": {}
+      }
+    },
+    {
+      "name": "dotmatrix1",
+      "settings": {
+        "family": "polka",
+        "seed": 1217177240,
+        "density": 80,
+        "size": 270,
+        "opacity": 1,
+        "colors": 2,
+        "hue": 282,
+        "rotation": 36,
+        "extra": {
+          "source": "linearLeft",
+          "layout": "grid",
+          "weight": 0.55,
+          "floor": 0.6,
+          "angle": 0,
+          "softness": 0.08,
+          "wash": 0
+        }
+      }
+    },
+    {
+      "name": "flashy",
+      "settings": {
+        "family": "waves",
         "seed": 1337,
         "density": 10,
-        "size": 220,
+        "size": 400,
+        "opacity": 1,
+        "colors": 6,
+        "hue": 182,
+        "rotation": 107,
+        "extra": {}
+      }
+    },
+    {
+      "name": "fsfsfsfsf",
+      "settings": {
+        "family": "waves",
+        "seed": 1903359714,
+        "density": 3,
+        "size": 40,
+        "opacity": 1,
+        "colors": 2,
+        "hue": 105,
+        "rotation": 100,
+        "extra": {}
+      }
+    },
+    {
+      "name": "krizzel",
+      "settings": {
+        "family": "handdrawn",
+        "seed": 292529045,
+        "density": 52,
+        "size": 370,
+        "opacity": 0.9,
+        "colors": 1,
+        "hue": 223,
+        "rotation": 326,
+        "extra": {}
+      }
+    },
+    {
+      "name": "nice-dots",
+      "settings": {
+        "family": "bullseye",
+        "seed": 1629789952,
+        "density": 1,
+        "size": 110,
+        "opacity": 1,
+        "colors": 2,
+        "hue": 140,
+        "rotation": 92,
+        "extra": {}
+      }
+    },
+    {
+      "name": "polka1",
+      "settings": {
+        "family": "polka",
+        "seed": 1337,
+        "density": 28,
+        "size": 240,
         "opacity": 1,
         "colors": 3,
         "hue": 190,
-        "rotation": 0
+        "rotation": 0,
+        "extra": {
+          "source": "linearLeft",
+          "layout": "grid",
+          "weight": 0.55,
+          "floor": 0.6,
+          "angle": 0,
+          "softness": 0.08,
+          "wash": 0
+        }
       }
     },
     {
-      "name": "Waves deep",
+      "name": "polka2",
+      "settings": {
+        "family": "polka",
+        "seed": 1513414722,
+        "density": 71,
+        "size": 550,
+        "opacity": 1,
+        "colors": 1,
+        "hue": 277,
+        "rotation": 0,
+        "extra": {
+          "source": "linearLeft",
+          "layout": "scatter",
+          "weight": 0.55,
+          "floor": 0.6,
+          "angle": 0,
+          "softness": 0.08,
+          "wash": 0
+        }
+      }
+    },
+    {
+      "name": "polka3",
+      "settings": {
+        "family": "polka",
+        "seed": 677617335,
+        "density": 6,
+        "size": 760,
+        "opacity": 1,
+        "colors": 1,
+        "hue": 277,
+        "rotation": 0,
+        "extra": {
+          "source": "linearLeft",
+          "layout": "scatter",
+          "weight": 0.55,
+          "floor": 0.6,
+          "angle": 0,
+          "softness": 0.08,
+          "wash": 0
+        }
+      }
+    },
+    {
+      "name": "polka4",
+      "settings": {
+        "family": "polka",
+        "seed": 2380148822,
+        "density": 28,
+        "size": 380,
+        "opacity": 1,
+        "colors": 1,
+        "hue": 144,
+        "rotation": 26,
+        "extra": {
+          "source": "linearLeft",
+          "layout": "grid",
+          "weight": 0.55,
+          "floor": 0.6,
+          "angle": 0,
+          "softness": 0.08,
+          "wash": 0
+        }
+      }
+    },
+    {
+      "name": "polka5",
+      "settings": {
+        "family": "polka",
+        "seed": 582728107,
+        "density": 47,
+        "size": 730,
+        "opacity": 1,
+        "colors": 5,
+        "hue": 255,
+        "rotation": 159,
+        "extra": {
+          "source": "circle",
+          "layout": "hex",
+          "weight": 0.2,
+          "floor": 2.7,
+          "angle": 282,
+          "softness": 0.03,
+          "wash": 2.1
+        }
+      }
+    },
+    {
+      "name": "Preset 11",
+      "settings": {
+        "family": "triangles",
+        "seed": 1920192953,
+        "density": 10,
+        "size": 70,
+        "opacity": 1,
+        "colors": 1,
+        "hue": 346,
+        "rotation": 304,
+        "extra": {}
+      }
+    },
+    {
+      "name": "spotlight1",
+      "settings": {
+        "family": "polka",
+        "seed": 582728107,
+        "size": 730,
+        "density": 47,
+        "opacity": 1,
+        "colors": 5,
+        "hue": 255,
+        "rotation": 159,
+        "extra": {
+          "source": "radial",
+          "layout": "hex",
+          "weight": 0.8,
+          "floor": 2.7,
+          "angle": 282,
+          "softness": 0.03,
+          "wash": 1.1
+        }
+      }
+    },
+    {
+      "name": "waves1",
       "settings": {
         "family": "waves",
-        "seed": 24601,
+        "seed": 2836691542,
         "density": 12,
-        "size": 240,
-        "opacity": 0.9,
+        "size": 360,
+        "opacity": 0.95,
         "colors": 2,
-        "hue": 210,
-        "rotation": 0
+        "hue": 7,
+        "rotation": 131,
+        "extra": {}
       }
     },
     {
-      "name": "Chevrons warm",
+      "name": "wow1",
       "settings": {
-        "family": "chevrons",
-        "seed": 7,
-        "density": 6,
-        "size": 200,
-        "opacity": 1,
-        "colors": 2,
-        "hue": 25,
-        "rotation": 0
+        "family": "dots",
+        "seed": 1337,
+        "density": 20,
+        "size": 250,
+        "opacity": 0.9,
+        "colors": 4,
+        "hue": 248,
+        "rotation": 0,
+        "extra": {}
       }
     },
     {
-      "name": "Bullseye bright",
+      "name": "wowww",
       "settings": {
         "family": "bullseye",
-        "seed": 99,
-        "density": 4,
-        "size": 260,
+        "seed": 4128769034,
+        "density": 10,
+        "size": 60,
         "opacity": 1,
-        "colors": 3,
-        "hue": 300,
-        "rotation": 0
+        "colors": 8,
+        "hue": 269,
+        "rotation": 322,
+        "extra": {}
       }
     },
     {
-      "name": "Handdrawn rough",
+      "name": "yellow-blue",
       "settings": {
-        "family": "handdrawn",
-        "seed": 512,
-        "density": 40,
-        "size": 180,
-        "opacity": 0.8,
+        "family": "triangles",
+        "seed": 3854679205,
+        "density": 14,
+        "size": 90,
+        "opacity": 1,
         "colors": 2,
-        "hue": 45,
-        "rotation": 0
+        "hue": 46,
+        "rotation": 158,
+        "extra": {}
+      }
+    },
+    {
+      "name": "yolanda",
+      "settings": {
+        "family": "chevrons",
+        "seed": 3757663141,
+        "density": 4,
+        "size": 70,
+        "opacity": 0.9,
+        "colors": 5,
+        "hue": 2,
+        "rotation": 184,
+        "extra": {}
       }
     }
   ]

@@ -32,7 +32,7 @@
  * for the smallest tile, and so on. Everything else has a dark default, so the
  * element also works on a page that sets none of them.
  */
-import { generateThumbnail, type PatternSettings } from "./pattern";
+import { generateThumbnail } from "./pattern";
 import { type Preset, sortPresets } from "./presets";
 
 declare global {
@@ -226,14 +226,14 @@ export function tilesDetail<T>(event: Event): T {
 }
 
 /**
- * A pattern as the source of an image.
+ * A saved picture as the source of an image.
  *
  * @remarks
  * A data URL needs no file and no second request, and the same settings always
  * give the same URL, which the browser then holds in its image cache.
  */
-function previewUrl(settings: PatternSettings): string {
-  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(generateThumbnail(settings))}`;
+function previewUrl(preset: Preset): string {
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(generateThumbnail(preset.settings))}`;
 }
 
 // --- Tiles -----------------------------------------------------------------
@@ -336,7 +336,7 @@ class PatternTilesElement extends HTMLElement {
     // The name of the tile is on the button, so the image needs no text.
     thumb.alt = "";
     thumb.decoding = "async";
-    thumb.src = previewUrl(preset.settings);
+    thumb.src = previewUrl(preset);
 
     const name = document.createElement("span");
     name.className = "tile-name";

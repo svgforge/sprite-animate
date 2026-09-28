@@ -15,15 +15,15 @@
  * ```
  */
 import defaultPresetFile from "./default-presets.json";
-import { FAMILY_BY_ID, type FamilyId, type PatternSettings } from "./pattern";
+import { FAMILY_BY_ID, type FamilyId, type PatternSettings, readExtra } from "./pattern";
 
 /**
  * A named pattern, as it is stored and as it is exported.
  */
 export interface Preset {
-  /** Name the preset is listed and saved under. */
+  /** Name the pattern is listed and saved under. */
   name: string;
-  /** The pattern the preset stands for. */
+  /** The settings the pattern is drawn from. */
   settings: PatternSettings;
 }
 
@@ -121,9 +121,9 @@ export function countPresetsInFile(json: string): number | null {
  *
  * @remarks
  * Nothing is trusted here: a preset that is not a preset is dropped, values that
- * are out of range are clamped, and a family that no longer exists falls back to
- * a family that does. This is what makes an imported or restored file safe to
- * use.
+ * are out of range are clamped, and a family that no longer exists means the
+ * preset is dropped rather than shown as something else. This is what makes an
+ * imported or restored file safe to use.
  *
  * @param json - The file content.
  * @returns The presets that could be read, or `null` if there were none.
@@ -154,20 +154,26 @@ function sanitizePreset(entry: unknown): Preset | null {
   const raw = record.settings;
   if (typeof raw !== "object" || raw === null) return null;
   const values = raw as Record<string, unknown>;
+  const settings = sanitizePattern(values);
+  return settings ? { name, settings } : null;
+}
+
+function sanitizePattern(values: Record<string, unknown>): PatternSettings | null {
   const family = FAMILY_BY_ID.get(values.family as FamilyId);
   if (!family) return null;
   return {
-    name,
-    settings: {
-      family: family.id,
-      seed: roundInt(values.seed, 0, 0xffffffff),
-      density: clampNumber(values.density, family.densityMin, family.densityMax),
-      size: clampNumber(values.size, 40, 400),
-      opacity: clampNumber(values.opacity, 0.1, 1),
-      colors: roundInt(values.colors, 1, 8),
-      hue: wrapDegrees(values.hue),
-      rotation: wrapDegrees(values.rotation),
-    },
+    family: family.id,
+    seed: roundInt(values.seed, 0, 0xffffffff),
+    density: roundInt(values.density, family.density.min, family.density.max),
+    size: roundInt(values.size, family.size.min, family.size.max),
+    opacity: clampNumber(values.opacity, 0.1, 1),
+    colors: roundInt(values.colors, 1, 8),
+    hue: wrapDegrees(values.hue),
+    rotation: wrapDegrees(values.rotation),
+    // The values of the controls the pattern brings for itself. A file stored
+    // before a pattern brought controls has none, so they fall back to its
+    // own defaults.
+    extra: readExtra(family, values.extra as Record<string, unknown> | undefined),
   };
 }
 

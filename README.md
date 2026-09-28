@@ -190,13 +190,24 @@ manual with JS API).
 │   ├── svg-morph.ts        # The <svg-morph> Web Component
 │   ├── demo1.ts            # Builds the demo page dynamically from the sprite
 │   ├── demo2.ts            # Second demo page
-│   ├── demo3.ts            # Pattern Studio page (7 seamless pattern families)
+│   ├── demo3.ts            # Pattern Studio page (repeating tiles and polka pictures)
 │   ├── demo4.ts            # Endless morph page (play/pause, speed slider, path morphing shape + colour)
 │   ├── random-path.ts      # Random closed paths for the endless morph (3 looks)
-│   ├── pattern.ts          # The pattern engine: families + SVG rendering
+│   ├── pattern/            # The pattern engine: one file per pattern
+│   │   ├── index.ts        #   Collects the patterns, renders them into SVG
+│   │   ├── types.ts        #   The types the pattern files and the engine share
+│   │   ├── shared.ts       #   Random source, color helpers, the palette
+│   │   ├── dots.ts         #   The dots / halftone pattern
+│   │   ├── triangles.ts    #   The triangles / tessellation pattern
+│   │   ├── waves.ts        #   The waves / topography pattern
+│   │   ├── chevrons.ts     #   The chevrons / stripes pattern
+│   │   ├── bullseye.ts     #   The concentric / bullseye pattern
+│   │   ├── rhombus.ts      #   The rhombus / lattice pattern
+│   │   ├── handdrawn.ts    #   The hand-drawn pattern
+│   │   └── polka.ts        #   The polka pattern: a gradient or figure resolved into dots
 │   ├── pattern-studio.ts   # The Pattern Studio UI behind demo3.html
 │   ├── pattern-tiles.ts    # <pattern-tiles>: the saved presets as previews
-│   ├── jd-select.ts        # <jd-select>: the family chooser as a web component
+│   ├── jd-select.ts        # <jd-select>: the pattern chooser as a web component
 │   ├── presets.ts          # Preset serialization / validation (used by demo3)
 │   ├── default-presets.json # Presets a fresh browser starts with (loaded if nothing is stored)
 │   └── index.ts            # Landing page
