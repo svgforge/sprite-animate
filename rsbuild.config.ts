@@ -20,6 +20,7 @@ export default defineConfig({
       demo2: "./src/demo2.ts",
       demo3: "./src/demo3.ts",
       demo4: "./src/demo4.ts",
+      demo5: "./src/demo5.ts",
     },
   },
 
@@ -37,7 +38,8 @@ export default defineConfig({
         .replaceAll("__DEMO1_ACTIVE__", entryName === "demo1" ? 'aria-current="page"' : "")
         .replaceAll("__DEMO2_ACTIVE__", entryName === "demo2" ? 'aria-current="page"' : "")
         .replaceAll("__DEMO3_ACTIVE__", entryName === "demo3" ? 'aria-current="page"' : "")
-        .replaceAll("__DEMO4_ACTIVE__", entryName === "demo4" ? 'aria-current="page"' : ""),
+        .replaceAll("__DEMO4_ACTIVE__", entryName === "demo4" ? 'aria-current="page"' : "")
+        .replaceAll("__DEMO5_ACTIVE__", entryName === "demo5" ? 'aria-current="page"' : ""),
       footerPartial,
     }),
   },

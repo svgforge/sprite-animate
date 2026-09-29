@@ -176,7 +176,7 @@ manual with JS API).
 
 ```
 └─ dist/
-   ├─ index.html, demo1.html, demo2.html, demo3.html, demo4.html, static/   # Demo build
+   ├─ index.html, demo1.html … demo5.html, static/          # Demo build
    └─ lib/
       └─ svg-morph.js                              # Standalone release bundle
 ```
@@ -192,6 +192,7 @@ manual with JS API).
 │   ├── demo2.ts            # Second demo page
 │   ├── demo3.ts            # Pattern Studio page (repeating tiles and polka pictures)
 │   ├── demo4.ts            # Endless morph page (play/pause, speed slider, path morphing shape + colour)
+│   ├── demo5.ts            # Polka from a photo page (a picture the user picks, drawn as dots)
 │   ├── random-path.ts      # Random closed paths for the endless morph (3 looks)
 │   ├── pattern/            # The pattern engine: one file per pattern
 │   │   ├── index.ts        #   Collects the patterns, renders them into SVG
@@ -207,6 +208,9 @@ manual with JS API).
 │   │   └── polka.ts        #   The polka pattern: a gradient or figure resolved into dots
 │   ├── pattern-studio.ts   # The Pattern Studio UI behind demo3.html
 │   ├── pattern-tiles.ts    # <pattern-tiles>: the saved presets as previews
+│   ├── polka-photo.ts      # The card behind demo5.html: a picked image drawn as dots
+│   ├── image-field.ts      # Reads a picked image into the brightness field the dots follow
+│   ├── svg-file.ts         # Download / clipboard for an SVG, shared by the pattern pages
 │   ├── jd-select.ts        # <jd-select>: the pattern chooser as a web component
 │   ├── presets.ts          # Preset serialization / validation (used by demo3)
 │   ├── default-presets.json # Presets a fresh browser starts with (loaded if nothing is stored)
@@ -218,7 +222,9 @@ manual with JS API).
 │   ├── demo2.html          # Second demo page template
 │   ├── demo3.html          # Pattern Studio page template
 │   ├── demo4.html          # Endless morph page template
-│   └── css/shared.css      # Shared stylesheet
+│   ├── demo5.html          # Polka from a photo page template
+│   ├── css/shared.css      # Shared stylesheet
+│   └── css/control-card.css # The control card the pattern pages share (demo3, demo5)
 ├── templates/
 │   ├── header.html         # Shared header partial (injected via templateParameters)
 │   └── footer.html         # Shared footer partial

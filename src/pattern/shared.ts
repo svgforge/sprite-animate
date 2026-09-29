@@ -9,6 +9,9 @@
  */
 import type { Facet, Palette, PatternSettings } from "./types";
 
+/** The settings the colors of a pattern are made of. */
+export type PaletteSettings = Pick<PatternSettings, "hue" | "colors" | "opacity">;
+
 /**
  * Deterministic PRNG (mulberry32): the same seed always produces the same
  * sequence, so a seed fully defines a pattern.
@@ -60,8 +63,12 @@ export function color(hue: number, sat: number, light: number, alpha: number): s
 /**
  * The palette the settings resolve to: as many bands as asked for, spread evenly
  * around the color circle, plus a backdrop tone for a pattern that brings one.
+ *
+ * @remarks
+ * Only the three settings the colors depend on are asked for, so a page that has
+ * colors of its own and no pattern behind them can use the same palette.
  */
-export function palette(settings: PatternSettings): Palette {
+export function palette(settings: PaletteSettings): Palette {
   const count = clamp(Math.round(settings.colors), 1, 8);
   const bands: number[] = [];
   const fills: string[] = [];

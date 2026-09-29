@@ -73,6 +73,7 @@ import {
   serializePresets,
   upsertPreset,
 } from "./presets";
+import { copySvg, downloadSvg, setFileStatus } from "./svg-file";
 
 const PRESET_STORAGE_KEY = "sprite-amimate.pattern-studio.presets";
 
@@ -141,6 +142,7 @@ const FAMILY_TEXTS: Record<
 const CONTROL_TEXTS: Record<string, string> = {
   source: "Source",
   layout: "Dot layout",
+  shape: "Dot shape",
   weight: "Dot weight",
   floor: "Smallest dot",
   angle: "Gradient angle",
@@ -152,14 +154,10 @@ const CONTROL_TEXTS: Record<string, string> = {
  * The words for a value a pattern offers in a chooser, by the value itself.
  */
 const CHOICE_TEXTS: Record<string, { label: string; description?: string }> = {
-  // What the dots of a polka picture trace.
-  linearLeft: {
+  // What the dots of a polka picture trace. The source angle turns all of them.
+  linear: {
     label: "Gradient across",
-    description: "A gradient running from the left edge to the right edge.",
-  },
-  linearAngle: {
-    label: "Gradient at an angle",
-    description: "The same gradient, turned by the angle below.",
+    description: "A gradient running from one edge to the other, turned by the gradient angle.",
   },
   radial: {
     label: "Radial gradient",
@@ -185,6 +183,11 @@ const CHOICE_TEXTS: Record<string, { label: string; description?: string }> = {
   grid: { label: "Grid" },
   hex: { label: "Hex" },
   scatter: { label: "Scatter" },
+  // How those dots are shaped. The values are not the layouts: a dot and a
+  // hexagon sit in the same lattice as the grid and the hex layout.
+  dot: { label: "Dot" },
+  square: { label: "Square" },
+  hexagon: { label: "Hexagon" },
 };
 
 interface FieldSpec {
@@ -234,32 +237,6 @@ function exportCanvas(): Canvas {
   const page = getComputedStyle(document.documentElement);
   const background = page.getPropertyValue("--bg").trim();
   return { ...EXPORT_SIZE, background: background || "transparent" };
-}
-
-/**
- * Copy text to the clipboard via the async Clipboard API, falling back to the
- * legacy execCommand path when it is unavailable.
- */
-async function writeClipboard(text: string): Promise<boolean> {
-  try {
-    await navigator.clipboard.writeText(text);
-    return true;
-  } catch {
-    const area = document.createElement("textarea");
-    area.value = text;
-    area.style.position = "fixed";
-    area.style.opacity = "0";
-    document.body.appendChild(area);
-    area.select();
-    let copied = false;
-    try {
-      copied = document.execCommand("copy");
-    } catch {
-      copied = false;
-    }
-    area.remove();
-    return copied;
-  }
 }
 
 // --- Controls --------------------------------------------------------------
@@ -313,6 +290,14 @@ export class Slider {
   }
 
   /**
+   * Writes what the input says into the readout, for when the user has moved the
+   * slider by hand.
+   */
+  sync(): void {
+    this.value = this.value;
+  }
+
+  /**
    * Every family counts in its own units, so it brings the range of the density
    * slider with it.
    */
@@ -354,6 +339,7 @@ interface StudioUi {
   seedInput: HTMLInputElement | null;
   randomSeedButton: HTMLButtonElement | null;
   randomizeButton: HTMLButtonElement | null;
+  randomizeInPlaceButton: HTMLButtonElement | null;
   downloadButton: HTMLButtonElement | null;
   copyButton: HTMLButtonElement | null;
   fileStatus: HTMLElement | null;
@@ -383,6 +369,7 @@ function createUi(root: ParentNode): StudioUi {
     seedInput: find<HTMLInputElement>(root, "seed"),
     randomSeedButton: find<HTMLButtonElement>(root, "seed-random"),
     randomizeButton: find<HTMLButtonElement>(root, "randomize-all"),
+    randomizeInPlaceButton: find<HTMLButtonElement>(root, "randomize-in-place"),
     downloadButton: find<HTMLButtonElement>(root, "pattern-download"),
     copyButton: find<HTMLButtonElement>(root, "pattern-copy"),
     fileStatus: find(root, "pattern-file-status"),
@@ -536,17 +523,29 @@ export class PatternStudio {
   }
 
   /**
-   * Draws a new pattern at random.
+   * Draws a new pattern at random, down to the pattern itself.
    *
    * @remarks
    * The pattern comes first, because it brings the ranges and the controls of
-   * everything below it; then the seed, the shared sliders that opt in and the
-   * controls of the pattern itself. Every number is read from the range its own
-   * control offers. The opacity is left alone on purpose: it says how strongly
-   * the pattern should read against the page, not what it is.
+   * everything below it; then everything {@link PatternStudio.randomizeInPlace |
+   * randomizeInPlace} draws. The opacity stays as it is here as well: it says how
+   * strongly the pattern should read against the page, not what it is.
    */
   randomize(): void {
     this.setFamily(FAMILIES[Math.floor(Math.random() * FAMILIES.length)].id);
+    this.randomizeInPlace();
+  }
+
+  /**
+   * Draws a new pattern at random and keeps the pattern it is.
+   *
+   * @remarks
+   * The seed, the shared sliders that opt in and the controls of the pattern
+   * itself are drawn anew; every number is read from the range its own control
+   * offers. The pattern stays as it is, because a button that changed the family
+   * under the pointer would be a surprise while working on one.
+   */
+  randomizeInPlace(): void {
     this.settings.seed = randomSeed();
     for (const field of FIELDS) {
       if (!field.random) continue;
@@ -578,13 +577,7 @@ export class PatternStudio {
    */
   downloadSvg(): void {
     const name = `${this.settings.family}.svg`;
-    const blob = new Blob([this.standaloneSvg()], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = name;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadSvg(name, this.standaloneSvg());
     this.setFileStatus(`Downloaded ${name}.`);
   }
 
@@ -596,7 +589,7 @@ export class PatternStudio {
    * through the status line of the file buttons.
    */
   async copySvg(): Promise<void> {
-    const copied = await writeClipboard(this.standaloneSvg());
+    const copied = await copySvg(this.standaloneSvg());
     this.setFileStatus(
       copied ? "SVG copied to clipboard." : "Clipboard unavailable — use Download SVG instead.",
     );
@@ -920,6 +913,10 @@ export class PatternStudio {
       this.randomize();
     });
 
+    ui.randomizeInPlaceButton?.addEventListener("click", () => {
+      this.randomizeInPlace();
+    });
+
     ui.downloadButton?.addEventListener("click", () => {
       this.downloadSvg();
     });
@@ -1042,10 +1039,7 @@ export class PatternStudio {
   }
 
   private setFileStatus(message: string): void {
-    const status = this.ui.fileStatus;
-    if (!status) return;
-    status.textContent = message;
-    status.hidden = false;
+    setFileStatus(this.ui.fileStatus, message);
   }
 }
 

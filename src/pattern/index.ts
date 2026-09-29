@@ -261,8 +261,11 @@ function splitRgba(value: string): { rgb: string; alpha: number } | null {
  * Replace rgba() fills and strokes with their solid rgb() color plus an
  * explicit fill-/stroke-opacity attribute. Editors like Inkscape render
  * rgba() colors as black, so exported files must use the split form.
+ *
+ * @param markup - The markup to rewrite.
+ * @returns The markup with every color split into color and opacity.
  */
-function solidColors(markup: string): string {
+export function solidColors(markup: string): string {
   return markup.replace(/<[^>]+>/g, (tag) => {
     let output = tag;
     for (const [attr, opacityAttr] of [

@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>svg-morph — Polka from a Photo</title>
+    <link rel="stylesheet" href="./css/shared.css">
+    <link rel="stylesheet" href="./css/control-card.css">
+    <link rel="stylesheet" href="./css/marker-heading.css">
+
+    <style>
+    /* The page is a picture with a sidebar: the picture takes the room that is
+       left, the card keeps a column of its own beside it. */
+    .hero {
+      display: flex;
+      /* The title takes a line of its own; the picture and the card share the
+         next one, and the card goes below the picture when the width is gone. */
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 1.5rem;
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+    }
+    .page-title {
+      flex: 1 0 100%;
+    }
+    /* The picture and the crossfade belong together, in the wide column. */
+    .showcase {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    /* The card is the sidebar: it keeps its own column beside the picture, so
+       it covers nothing and needs no room of its own. */
+    .control-card {
+      flex: 0 0 420px;
+      max-width: 420px;
+    }
+    @media (max-width: 1000px) {
+      /* A small screen has no room for two columns, so the card comes under the
+         picture and the page is one column again. */
+      .showcase,
+      .control-card {
+        flex: 1 1 100%;
+        max-width: none;
+      }
+    }
+    .stage {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      /* The frame belongs to the box, not to the layers, so the two of them do
+         not draw a border on top of each other. */
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      overflow: hidden;
+    }
+    /* Both layers fill the same box, so the picture and the dots stay on top of
+       each other to the pixel. */
+    .stage img,
+    .stage .pattern-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+    .stage img {
+      object-fit: contain;
+    }
+    .pattern-bg svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+      /* The same filters the studio uses, so a picture reads as deep here as
+         it does there. */
+      filter: saturate(1.35) contrast(1.06) brightness(1.06);
+    }
+    .photo-placeholder {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      margin: 0;
+      padding: 1rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    /* The crossfade spans the stage above it, like the scrubber of a film. */
+    .blend {
+      width: 100%;
+    }
+
+    </style>
+  </head>
+  <body>
+    <%= headerPartial %>
+
+    <main class="page">
+      <div class="hero">
+        <div class="page-title">
+          <h1 class="marker-heading" style="color:#000; --marker-color: #fff; --marker-opacity: 0.6; --marker-stroke-tilt: -5deg;">
+            <span class="heading-text">
+              <!-- The marker band is a ::before on .heading-text, one tile image
+                   repeated horizontally, so the heading needs no band markup. -->
+              Polka from a Photo
+            </span>
+          </h1>
+        </div>
+
+        <!-- The picture and its controls beside each other: the picture
+             grows into the room that is left, the card keeps a column
+             of its own. -->
+        <div class="showcase">
+          <!-- The image and its dotted counterpart in one box, one over the other,
+               so the crossfade below can move between the two layers. -->
+          <div class="stage">
+            <!-- The one pixel of the start picture: a valid image from the start,
+                 so nothing shows a broken image before a file is picked. -->
+            <img
+              id="photo-source"
+              alt="The image that was picked"
+              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+            >
+            <div class="pattern-bg" id="pattern-bg" aria-live="polite"></div>
+          </div>
+
+          <!-- The crossfade between the two layers: left the image, right the dots. -->
+          <div class="blend">
+            <div class="field">
+              <label for="blend">Crossfade — image → dots</label>
+              <output id="blend-readout" for="blend"></output>
+              <input type="range" id="blend" min="0" max="100" step="1" value="50">
+            </div>
+          </div>
+        </div>
+
+        <div class="control-card">
+          <h2>Controls</h2>
+
+          <!-- The source of the dots: a file the user picks. The dots are read
+               from it as brightness, so a photo becomes a picture of dots. -->
+          <div class="file-field">
+            <label for="photo-file">Image</label>
+            <input type="file" id="photo-file" accept="image/*">
+          </div>
+
+          <div class="seed-row">
+            <input type="number" id="seed" min="0" step="1" aria-label="Pattern seed">
+            <button type="button" id="seed-random">🎲 Random seed</button>
+          </div>
+
+          <div class="field">
+            <label for="layout">Dot layout</label>
+            <jd-select id="layout"></jd-select>
+          </div>
+
+          <div class="field">
+            <label for="shape">Dot shape</label>
+            <jd-select id="shape"></jd-select>
+          </div>
+
+          <!-- Every slider is there from the start: the card shows one picture,
+               so nothing has to come and go while the user works. -->
+          <div class="field">
+            <label for="count">Dots per row</label>
+            <output id="count-readout" for="count"></output>
+            <input type="range" id="count" min="6" max="90" step="1" value="28">
+          </div>
+
+          <div class="field">
+            <label for="weight">Dot weight</label>
+            <output id="weight-readout" for="weight"></output>
+            <input type="range" id="weight" min="0.05" max="1.5" step="0.05" value="0.55">
+          </div>
+
+          <div class="field">
+            <label for="floor">Smallest dot</label>
+            <output id="floor-readout" for="floor"></output>
+            <input type="range" id="floor" min="0" max="8" step="0.1" value="0.6">
+          </div>
+
+          <div class="field">
+            <label for="contrast">Contrast</label>
+            <output id="contrast-readout" for="contrast"></output>
+            <input type="range" id="contrast" min="0" max="1" step="0.01" value="0.5">
+          </div>
+
+          <div class="field">
+            <label for="brightness">Brightness</label>
+            <output id="brightness-readout" for="brightness"></output>
+            <input type="range" id="brightness" min="0" max="1" step="0.01" value="0.5">
+          </div>
+
+          <div class="field">
+            <label for="wash">Wash</label>
+            <output id="wash-readout" for="wash"></output>
+            <input type="range" id="wash" min="0" max="8" step="0.1" value="0">
+          </div>
+
+          <div class="field">
+            <label for="opacity">Opacity</label>
+            <output id="opacity-readout" for="opacity"></output>
+            <input type="range" id="opacity" min="0.1" max="1" step="0.05" value="1">
+          </div>
+
+          <div class="field">
+            <label for="colors">Colors</label>
+            <output id="colors-readout" for="colors"></output>
+            <input type="range" id="colors" min="1" max="8" step="1" value="4">
+          </div>
+
+          <div class="field">
+            <label for="hue">Hue</label>
+            <output id="hue-readout" for="hue"></output>
+            <input type="range" id="hue" min="0" max="360" step="1" value="200">
+          </div>
+
+          <!-- One button for the dots: the image stays, everything the dots do
+               with it is drawn again. The opacity is left alone, because it says
+               how strongly the picture should read against the page. -->
+          <button type="button" id="photo-random" class="wide">
+            🎲 Random dots
+          </button>
+
+          <div class="card-block">
+            <h2>Pattern file</h2>
+            <div class="card-actions">
+              <button type="button" id="photo-download">Download SVG</button>
+              <button type="button" id="photo-copy">Copy SVG</button>
+            </div>
+            <p class="card-status" id="photo-status" hidden></p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <%= footerPartial %>
+  </body>
+</html>

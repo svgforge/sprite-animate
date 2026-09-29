@@ -18,24 +18,67 @@
  * picture with every seed.
  */
 import { clamp, color, fmt } from "./shared";
-import type { Family, FamilyInput } from "./types";
+import type { Family, FamilyInput, Palette } from "./types";
 
-/** What the dots trace: a gradient running across the picture, or a figure. */
-const SOURCES = ["linearLeft", "linearAngle", "radial", "circle", "ring", "heart", "wave"] as const;
+/** What the dots trace: a gradient, or a figure. The angle turns either one. */
+const SOURCES = ["linear", "radial", "circle", "ring", "heart", "wave"] as const;
 
 /** One of the things the dots can trace. */
 type Source = (typeof SOURCES)[number];
 
 /** How the dots of a picture are placed. */
-const LAYOUTS = ["grid", "hex", "scatter"] as const;
+export const POLKA_LAYOUTS = ["grid", "hex", "scatter"] as const;
 
 /** One of the ways the dots can be placed. */
-type Layout = (typeof LAYOUTS)[number];
+export type PolkaLayout = (typeof POLKA_LAYOUTS)[number];
 
-/** The range of every control of this picture, in one place. */
-const RANGES = {
-  weight: { min: 0.05, max: 0.9, step: 0.05 },
-  floor: { min: 0, max: 4, step: 0.1 },
+/** How the dots of a picture are shaped. */
+export const POLKA_SHAPES = ["dot", "square", "hexagon"] as const;
+
+/** One of the shapes a dot can have. */
+export type PolkaShape = (typeof POLKA_SHAPES)[number];
+
+/**
+ * How wide a shape is, in px, when it reaches 1 px from its middle: a dot and a
+ * square are twice that, a hexagon √3 times, because it stands on a corner.
+ *
+ * @remarks
+ * The one table answers both questions the drawing asks, and it answers them the
+ * same way for every shape: a weight of 1 fills a whole cell, and a floor of n
+ * px makes the smallest shape n px wide.
+ */
+const WIDTH: Record<PolkaShape, number> = {
+  dot: 2,
+  square: 2,
+  hexagon: Math.sqrt(3),
+};
+
+/**
+ * The corners of a hexagon that reaches 1 from its middle, with one corner
+ * straight up and one straight down: the way a honeycomb sits in its lattice.
+ *
+ * @remarks
+ * Such a shape is √3 wide and 2 tall, so it fits a lattice that steps sideways
+ * by a cell and downwards by √3/2 of a cell, with every other row pushed half a
+ * cell to the side.
+ */
+const HEX_CORNERS = Array.from({ length: 6 }, (_, corner) => {
+  const angle = ((90 + corner * 60) * Math.PI) / 180;
+  return [Math.cos(angle), -Math.sin(angle)] as const;
+});
+
+/**
+ * The range of every control this picture shares with a page of its own, so a
+ * second page can offer the same sliders with the same limits.
+ */
+export const POLKA_RANGES = {
+  // A weight of 1 makes the biggest shape touch its neighbours exactly, so past 1
+  // the dots overlap and the field of dots grows into blobs.
+  weight: { min: 0.05, max: 1.5, step: 0.05 },
+  // The width of the smallest shape in px: a weak part of the field keeps a
+  // shape of its own, instead of fading out completely. The top of the range is
+  // about as wide as a cell, which is where every shape looks the same.
+  floor: { min: 0, max: 8, step: 0.1 },
   angle: { min: 0, max: 360, step: 1 },
   softness: { min: 0, max: 0.3, step: 0.01 },
   wash: { min: 0, max: 8, step: 0.1 },
@@ -56,10 +99,10 @@ const STAMP_RANGE = 0.3;
  * telling how strong the source is there. Everything the drawing needs to know
  * about a gradient or a figure is in there, so a new source is one function.
  */
-type Field = (u: number, v: number) => number;
+export type Field = (u: number, v: number) => number;
 
 /** How a source turns the settings into the field it draws. */
-type FieldBuilder = (settings: { angle: number; softness: number }) => Field;
+type FieldBuilder = (settings: { softness: number }) => Field;
 
 const FULL_TURN = Math.PI * 2;
 
@@ -92,25 +135,14 @@ function falloff(beyond: number, width: number): number {
  * The sources, each building its field from the settings.
  *
  * @remarks
- * A builder only reads the settings its own source cares about, so the angle
- * reaches the angled gradient and the softness reaches the figures, and nothing
- * else has to know about either of them.
+ * A builder only reads the settings its own source cares about, so the softness
+ * reaches the figures and nothing else has to know about it. The angle reaches
+ * no builder at all: it turns the finished field, whatever the source is.
  */
 const FIELDS: Record<Source, FieldBuilder> = {
-  // A gradient running from the left edge to the right edge.
-  linearLeft: () => (u) => u,
-  // The same gradient, turned by the angle the settings ask for.
-  linearAngle: ({ angle }) => {
-    const radians = (angle * Math.PI) / 180;
-    const cos = Math.cos(radians);
-    const sin = Math.sin(radians);
-    // The projection of the square onto the direction runs from its smallest
-    // corner value to its largest. Mapping that span onto 0..1 keeps the whole
-    // gradient in the picture, whatever the angle is.
-    const low = Math.min(0, cos) + Math.min(0, sin);
-    const high = Math.max(0, cos) + Math.max(0, sin);
-    return (u, v) => clamp((u * cos + v * sin - low) / (high - low), 0, 1);
-  },
+  // A gradient running from the left edge to the right edge. The angle turns it
+  // like any other source.
+  linear: () => (u) => u,
   // A gradient from the middle out to the rim, bright in the centre.
   radial: () => (u, v) => clamp(1 - radius(u, v), 0, 1),
   // A filled disc in the middle.
@@ -141,6 +173,39 @@ const FIELDS: Record<Source, FieldBuilder> = {
 };
 
 /**
+ * Turns a field about the middle of the picture, so the source leans while the
+ * dots keep the grid they sit in.
+ *
+ * @remarks
+ * The angle belongs to the field and not to a single source: a gradient runs in
+ * the direction the angle names, and a disc, a ring, a heart or a set of stripes
+ * tilts with it. Turning works by asking the field where it would stand if the
+ * picture turned the other way, so a place that turns out of the picture counts
+ * as 0 — the same as the edge of the picture, which is what a source fades out at
+ * anyway.
+ *
+ * @param field - The field of the chosen source.
+ * @param angle - Degrees to turn it by. 0 leaves the field as it is.
+ * @returns The turned field.
+ */
+function turn(field: Field, angle: number): Field {
+  if (angle === 0) return field;
+  const radians = (angle * Math.PI) / 180;
+  const cos = Math.cos(radians);
+  const sin = Math.sin(radians);
+  return (u, v) => {
+    const x = u - 0.5;
+    const y = v - 0.5;
+    // The place the field is asked about, with the turn taken back.
+    const turnedU = 0.5 + x * cos + y * sin;
+    const turnedV = 0.5 - x * sin + y * cos;
+    // Outside the picture there is no source to trace, so it stays empty.
+    if (turnedU < 0 || turnedU > 1 || turnedV < 0 || turnedV > 1) return 0;
+    return field(turnedU, turnedV);
+  };
+}
+
+/**
  * Where the dots sit on the picture.
  *
  * @remarks
@@ -150,32 +215,28 @@ const FIELDS: Record<Source, FieldBuilder> = {
  * density means roughly the same thing in each of them.
  */
 function dotPlaces(
-  layout: Layout,
-  density: number,
+  layout: PolkaLayout,
+  columns: number,
+  rows: number,
   rand: () => number,
 ): { u: number; v: number }[] {
-  const step = 1 / density;
-  const hex = layout === "hex";
-  // In a honeycomb the rows sit closer together than in a square grid: the
-  // vertical distance of a cell is its diagonal, √3/2 of its side. Filling the
-  // picture that way needs a few more rows, so they are spread over the whole
-  // height again and every row is the same distance from the next.
-  const rows = hex ? Math.ceil(density / (Math.sqrt(3) / 2)) : density;
+  const du = 1 / columns;
+  const dv = 1 / rows;
   const places: { u: number; v: number }[] = [];
   for (let row = 0; row < rows; row += 1) {
-    for (let column = 0; column < density; column += 1) {
-      let u = (column + 0.5) * step;
-      let v = (row + 0.5) / rows;
-      if (hex && row % 2 === 1) {
+    for (let column = 0; column < columns; column += 1) {
+      let u = (column + 0.5) * du;
+      let v = (row + 0.5) * dv;
+      if (layout === "hex" && row % 2 === 1) {
         // Every other row is pushed half a step sideways, which is what puts the
         // dots of two rows in the dents of each other.
-        u += step * 0.5;
+        u += du * 0.5;
       }
       if (layout === "scatter") {
         // The jitter stays inside the cell, so no two dots cross over and the
         // picture keeps its density.
-        u += (rand() - 0.5) * step * 0.7;
-        v += (rand() - 0.5) * step * 0.7;
+        u += (rand() - 0.5) * du * 0.7;
+        v += (rand() - 0.5) * dv * 0.7;
       }
       // A hex row can push a dot past the rim; wrapping keeps the picture full.
       if (u > 1) u -= 1;
@@ -185,10 +246,54 @@ function dotPlaces(
   return places;
 }
 
+/**
+ * How many rows of dots the picture takes.
+ *
+ * @remarks
+ * The cells stay square, so the dots stay round however the picture is shaped: a
+ * square grid and a scattered field take as many rows as the height asks for. A
+ * honeycomb sits closer together — the vertical distance of a cell is its
+ * diagonal, √3/2 of its side — so it needs more rows to fill the height, and they
+ * are spread over the whole height again, which keeps every row the same distance
+ * from the next.
+ */
+function rowsFor(layout: PolkaLayout, columns: number, width: number, height: number): number {
+  const aspect = height / width;
+  if (layout !== "hex") return Math.max(1, Math.round(aspect * columns));
+  return Math.max(1, Math.ceil(aspect * columns * (2 / Math.sqrt(3))));
+}
+
+/**
+ * The markup of one shape of the field of dots.
+ *
+ * @remarks
+ * The number that comes in is how far the shape reaches from its middle: a dot
+ * that far around, a square that far to every side, a hexagon that far out to
+ * its corners. One function for all of them, so a new shape is one more case
+ * here and nothing else in the drawing has to know about it.
+ */
+function shapeMarkup(
+  shape: PolkaShape,
+  cx: number,
+  cy: number,
+  size: number,
+  fill: string,
+): string {
+  if (shape === "square") {
+    return `<rect x="${fmt(cx - size)}" y="${fmt(cy - size)}" width="${fmt(size * 2)}" height="${fmt(size * 2)}" fill="${fill}"/>`;
+  }
+  if (shape === "hexagon") {
+    const corners = HEX_CORNERS.map(([x, y]) => `${fmt(cx + x * size)} ${fmt(cy + y * size)}`);
+    return `<polygon points="${corners.join(" ")}" fill="${fill}"/>`;
+  }
+  return `<circle cx="${fmt(cx)}" cy="${fmt(cy)}" r="${fmt(size)}" fill="${fill}"/>`;
+}
+
 /** The controls of this picture, read back in the types they are declared with. */
 function controlsOf(input: FamilyInput): {
   source: Source;
-  layout: Layout;
+  layout: PolkaLayout;
+  shape: PolkaShape;
   weight: number;
   floor: number;
   angle: number;
@@ -200,7 +305,8 @@ function controlsOf(input: FamilyInput): {
   const extra = input.extra;
   return {
     source: extra.source as Source,
-    layout: extra.layout as Layout,
+    layout: extra.layout as PolkaLayout,
+    shape: extra.shape as PolkaShape,
     weight: extra.weight as number,
     floor: extra.floor as number,
     angle: extra.angle as number,
@@ -209,9 +315,33 @@ function controlsOf(input: FamilyInput): {
   };
 }
 
+/** What the dots of a picture need to know, besides the field they follow. */
+export interface DotOptions {
+  /** The width of the picture in px. */
+  width: number;
+  /** The height of the picture in px. */
+  height: number;
+  /** How the dots are placed. */
+  layout: PolkaLayout;
+  /** How the dots are shaped. */
+  shape: PolkaShape;
+  /** How many columns of dots the picture takes. */
+  columns: number;
+  /** How big the strongest shape may get, as a share of a cell. */
+  weight: number;
+  /** How wide the smallest shape may get, in px. */
+  floor: number;
+  /** How far the dots are blurred, in px; 0 leaves them sharp. */
+  wash: number;
+  /** The colors of the picture. */
+  palette: Palette;
+  /** The random numbers of the seed. */
+  rand: () => number;
+}
+
 /**
- * Draws the picture: the dots, the backdrop they stand on, and the filter that
- * softens them.
+ * Draws a field as a picture of dots: the dots, the backdrop they stand on, and
+ * the filter that softens them.
  *
  * @remarks
  * Every dot takes its size and its color from the field at its own place: where
@@ -220,17 +350,25 @@ function controlsOf(input: FamilyInput): {
  * fades back. A dot on a field that has faded away is left out entirely, so a
  * weak part of the source stays open instead of turning into a wash of equal
  * dots. The result is a gradient or a figure, resolved into dots.
+ *
+ * A page that has a field of its own — a gradient, a figure, or the brightness
+ * of an image — hands it in here, and gets the same dots, the same colors and
+ * the same hand-stamped look out of it.
  */
-function drawPolka(input: FamilyInput): string {
-  const { rand, size, density, palette } = input;
-  const controls = controlsOf(input);
-  const field = FIELDS[controls.source](controls);
-  const places = dotPlaces(controls.layout, density, rand);
+export function drawDots(field: Field, options: DotOptions): string {
+  const { width, height, layout, shape, columns, weight, floor, wash, palette, rand } = options;
+  const rows = rowsFor(layout, columns, width, height);
+  const places = dotPlaces(layout, columns, rows, rand);
   // Everything from here on is in px, because that is what the markup uses.
-  const step = size / density;
-  // A dot never falls below the floor, so the biggest one has to be at least as
-  // big — a fine grid must not end up smaller than the floor radius.
-  const maxRadius = Math.max(controls.floor, step * 0.5 * controls.weight);
+  const cell = width / columns;
+  // The weight and the floor are both read as a width and turned into the reach
+  // of the shape: a weight of 1 fills a whole cell, and the floor is as wide as
+  // the user asked. Both are widths, so the same number means the same thing for
+  // a dot, a square and a hexagon.
+  const minSize = floor / WIDTH[shape];
+  // A shape never falls below the floor, so the biggest one has to be at least
+  // as big — a fine grid must not end up smaller than the floor.
+  const maxSize = Math.max(minSize, (cell * weight) / WIDTH[shape]);
   const dots: string[] = [];
 
   for (const place of places) {
@@ -239,9 +377,10 @@ function drawPolka(input: FamilyInput): string {
     // Every dot is stamped a little differently than its place in the field
     // asks for, in size as well as in tone. That is what the seed works on: the
     // field still decides the figure, but which dot sits where and how firmly
-    // it was pressed down is a new picture every time.
+    // it was pressed down is a new picture every time. The stamp works on what
+    // grows out of the floor, so it can never press a dot below it.
     const stamp = 1 + (rand() - 0.5) * STAMP_RANGE;
-    const radius = (controls.floor + (maxRadius - controls.floor) * strength) * stamp;
+    const size = minSize + (maxSize - minSize) * strength * stamp;
     // The field picks the hue: a weak dot takes the first band of the palette,
     // the strongest the last, so the picture runs through the whole palette.
     const band =
@@ -253,30 +392,29 @@ function drawPolka(input: FamilyInput): string {
     const sat = 40 + 50 * strength;
     const light = (30 + 50 * strength) * stamp;
     const alpha = palette.opacity * (0.35 + 0.65 * strength);
-    const cx = place.u * size;
-    const cy = place.v * size;
     dots.push(
-      `<circle cx="${fmt(cx)}" cy="${fmt(cy)}" r="${fmt(radius)}" fill="${color(band, sat, light, alpha)}"/>`,
+      shapeMarkup(shape, place.u * width, place.v * height, size, color(band, sat, light, alpha)),
     );
   }
 
   // The filter is always declared, so the picture stays valid markup; it is only
   // referenced when the settings ask for a wash.
-  const soften = controls.wash > 0 ? ` filter="url(#soften)"` : "";
+  const soften = wash > 0 ? ` filter="url(#soften)"` : "";
   const defs = [
     "  <defs>",
     '    <filter id="soften" x="-20%" y="-20%" width="140%" height="140%">',
-    `      <feGaussianBlur stdDeviation="${fmt(controls.wash)}"/>`,
+    `      <feGaussianBlur stdDeviation="${fmt(wash)}"/>`,
     "    </filter>",
     "  </defs>",
   ].join("\n");
   // The backdrop is the deep tone of the picture's own first hue, so the dots
   // always have something to stand out against. It is laid down oversized, by
   // the corner-to-corner measure of the picture: a turned picture is a turned
-  // square, and only the bigger one still covers the box at every angle.
+  // rectangle, and only the bigger one still covers the box at every angle.
   const cover = Math.SQRT2;
-  const backX = -((cover - 1) * size) / 2;
-  const backdrop = `<rect x="${fmt(backX)}" y="${fmt(backX)}" width="${fmt(size * cover)}" height="${fmt(size * cover)}" fill="${palette.paper}"${soften}/>`;
+  const backX = -((cover - 1) * width) / 2;
+  const backY = -((cover - 1) * height) / 2;
+  const backdrop = `<rect x="${fmt(backX)}" y="${fmt(backY)}" width="${fmt(width * cover)}" height="${fmt(height * cover)}" fill="${palette.paper}"${soften}/>`;
 
   return [
     defs,
@@ -289,6 +427,31 @@ function drawPolka(input: FamilyInput): string {
     .join("\n");
 }
 
+/**
+ * Draws the picture of this family: the field of the chosen source, turned by
+ * the angle, and then the dots that follow it.
+ */
+function drawPolka(input: FamilyInput): string {
+  const { rand, size, density, palette } = input;
+  const controls = controlsOf(input);
+  // The angle turns the field of whichever source is chosen, so it reaches every
+  // source and not only the gradient.
+  const field = turn(FIELDS[controls.source](controls), controls.angle);
+
+  return drawDots(field, {
+    width: size,
+    height: size,
+    layout: controls.layout,
+    shape: controls.shape,
+    columns: density,
+    weight: controls.weight,
+    floor: controls.floor,
+    wash: controls.wash,
+    palette,
+    rand,
+  });
+}
+
 /** The polka pattern. */
 export const polka: Family = {
   id: "polka",
@@ -297,13 +460,14 @@ export const polka: Family = {
   density: { min: 6, max: 90, step: 1 },
   densityDefault: 28,
   controls: [
-    { kind: "choice", key: "source", values: SOURCES, start: "linearLeft" },
-    { kind: "choice", key: "layout", values: LAYOUTS, start: "grid" },
-    { kind: "range", key: "weight", range: RANGES.weight, start: 0.55 },
-    { kind: "range", key: "floor", range: RANGES.floor, start: 0.6 },
-    { kind: "range", key: "angle", range: RANGES.angle, start: 0 },
-    { kind: "range", key: "softness", range: RANGES.softness, start: 0.08 },
-    { kind: "range", key: "wash", range: RANGES.wash, start: 0 },
+    { kind: "choice", key: "source", values: SOURCES, start: "linear" },
+    { kind: "choice", key: "layout", values: POLKA_LAYOUTS, start: "grid" },
+    { kind: "choice", key: "shape", values: POLKA_SHAPES, start: "dot" },
+    { kind: "range", key: "weight", range: POLKA_RANGES.weight, start: 0.55 },
+    { kind: "range", key: "floor", range: POLKA_RANGES.floor, start: 0.6 },
+    { kind: "range", key: "angle", range: POLKA_RANGES.angle, start: 0 },
+    { kind: "range", key: "softness", range: POLKA_RANGES.softness, start: 0.08 },
+    { kind: "range", key: "wash", range: POLKA_RANGES.wash, start: 0 },
   ],
   draw: drawPolka,
 };

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>svg-morph — Pattern Studio</title>
     <link rel="stylesheet" href="./css/shared.css">
+    <link rel="stylesheet" href="./css/control-card.css">
     <link rel="stylesheet" href="./css/marker-heading.css">
 
     <style>
@@ -47,80 +48,11 @@
       margin: 0 auto;
       padding: 2rem 1rem 3rem;
     }
-    .control-card {
-      /* A layered backdrop makes the dialog readable over any pattern: the
-         gradient tints the card, the backdrop-filter blurs and saturates the
-         pattern behind it, and the accent border follows the current hue. */
-      background: linear-gradient(165deg, rgba(18, 18, 31, 0.72), rgba(18, 18, 31, 0.45));
-      border: 1px solid var(--border);
-      border-color: color-mix(in srgb, var(--pattern-accent, #00d4ff) 40%, var(--border));
-      border-radius: var(--radius);
-      padding: 1.5rem;
-      max-width: 560px;
-      width: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-      backdrop-filter: blur(16px) saturate(1.5);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
-      /* The editable surfaces of the card. They sit *above* the card, not below
-         it: a field darker than its surroundings reads as a hole, a lighter one
-         reads as something you can type into. One set of values, so the plain
-         fields and the family chooser cannot drift apart. */
-      --field-bg: rgba(255, 255, 255, 0.07);
-      --field-bg-hover: rgba(255, 255, 255, 0.11);
-      --field-border: rgba(255, 255, 255, 0.16);
-    }
-    .control-card h2 {
-      margin: 0;
-      font-size: 1rem;
-      font-weight: 400;
-      color: var(--pattern-accent, var(--accent));
-      letter-spacing: 0.05em;
-      text-transform: uppercase;
-    }
-    .seed-row {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-    }
-    .seed-row input[type="number"] {
-      flex: 1;
-      min-width: 0;
-    }
-    .field {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0.4rem 0.75rem;
-      align-items: center;
-    }
-    .field label {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-    /* The chooser spans the whole width of the field, and lets the page
-       decide its hue: the studio puts --pattern-accent on <html>, and the
-       element reads it through its own accent hook. */
-    jd-select {
-      grid-column: 1 / -1;
-      --jd-select-accent: var(--pattern-accent, var(--accent));
-      /* The chooser is a field of the card, so it takes the card's field values. */
-      --jd-select-background: var(--field-bg);
-      --jd-select-surface-hover: var(--field-bg-hover);
-      --jd-select-border: var(--field-border);
-    }
     .family-desc {
       margin: -0.5rem 0 0;
       font-size: 0.85rem;
       color: var(--text-muted);
       line-height: 1.4;
-    }
-    .preset-block {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      border-top: 1px solid var(--border);
-      padding-top: 1.25rem;
     }
     .preset-row {
       display: flex;
@@ -133,76 +65,13 @@
     pattern-tiles {
       --pattern-tiles-accent: var(--pattern-accent, var(--accent));
     }
-    .preset-actions {
+    /* The two randomize buttons share the width of the card, side by side. */
+    .randomize-row {
       display: flex;
       gap: 0.5rem;
     }
-    .preset-status {
-      margin: 0;
-      font-size: 0.8rem;
-      color: var(--text-muted);
-    }
-    .field output {
-      font-size: 0.85rem;
-      color: var(--accent);
-      font-variant-numeric: tabular-nums;
-      text-align: right;
-    }
-    .field input[type="range"] {
-      grid-column: 1 / -1;
-      width: 100%;
-      accent-color: var(--accent);
-    }
-    input[type="number"],
-    input[type="range"],
-    button {
-      accent-color: var(--accent);
-    }
-    button {
-      background: var(--accent-soft);
-      color: var(--accent);
-      border: 1px solid rgba(0, 212, 255, 0.4);
-      border-radius: 6px;
-      padding: 0.4rem 0.75rem;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-    button:hover {
-      background: var(--surface-hover);
-    }
-    .randomize-all {
-      width: 100%;
-    }
-    /* The editable fields of the card, raised above it. A form field inherits no
-       font of its own, so the font is named here as well. */
-    input[type="number"],
-    input[type="text"],
-    textarea {
-      background: var(--field-bg);
-      color: var(--text);
-      border: 1px solid var(--field-border);
-      border-radius: 6px;
-      padding: 0.4rem 0.55rem;
-      font-family: inherit;
-      font-size: 0.85rem;
-    }
-    input[type="number"]::placeholder,
-    input[type="text"]::placeholder,
-    textarea::placeholder {
-      color: var(--text-muted);
-      opacity: 1;
-    }
-    input[type="number"]:hover,
-    input[type="text"]:hover,
-    textarea:hover {
-      background: var(--field-bg-hover);
-      border-color: color-mix(in srgb, var(--pattern-accent, var(--accent)) 45%, var(--field-border));
-    }
-    input[type="number"]:focus-visible,
-    input[type="text"]:focus-visible,
-    textarea:focus-visible {
-      outline: 2px solid var(--pattern-accent, var(--accent));
-      outline-offset: 2px;
+    .randomize-row button {
+      flex: 1;
     }
     .page-title {
       text-align: center;
@@ -292,20 +161,29 @@
                a fixed list of values. -->
           <div id="pattern-fields"></div>
 
-          <button type="button" id="randomize-all" class="randomize-all">
-            🎲 Random all but opacity
-          </button>
+          <!-- Two buttons for the same thing at two depths: one draws a new
+               pattern as well, the other keeps the pattern and only redraws
+               everything below it. Both leave the opacity alone, because it says
+               how strongly the pattern should read against the page. -->
+          <div class="randomize-row">
+            <button type="button" id="randomize-all" class="randomize-all">
+              🎲 Random all
+            </button>
+            <button type="button" id="randomize-in-place">
+              🎲 Random all but Pattern, Opacity
+            </button>
+          </div>
 
-          <div class="preset-block">
+          <div class="card-block">
             <h2>Pattern file</h2>
-            <div class="preset-actions">
+            <div class="card-actions">
               <button type="button" id="pattern-download">Download SVG</button>
               <button type="button" id="pattern-copy">Copy SVG</button>
             </div>
-            <p class="preset-status" id="pattern-file-status" hidden></p>
+            <p class="card-status" id="pattern-file-status" hidden></p>
           </div>
 
-          <div class="preset-block">
+          <div class="card-block">
             <h2>Presets</h2>
             <div class="preset-row">
               <input type="text" id="preset-name" placeholder="Preset name" aria-label="Preset name">
@@ -316,12 +194,12 @@
                  itself, so the studio only hands it the patterns and listens
                  for what is picked. -->
             <pattern-tiles id="preset-list"></pattern-tiles>
-            <div class="preset-actions">
+            <div class="card-actions">
               <button type="button" id="preset-export">Export</button>
               <button type="button" id="preset-import">Import</button>
               <input type="file" id="preset-file" accept="application/json,.json" hidden>
             </div>
-            <p class="preset-status" id="preset-status" hidden></p>
+            <p class="card-status" id="preset-status" hidden></p>
           </div>
         </div>
       </div>
