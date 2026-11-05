@@ -128,23 +128,23 @@ class SpriteMorphElement extends HTMLElement {
 
     this.config = {
       spriteHref: attrs["sprite-href"] || "",
-      icons: attrs["icons"] || undefined,
-      duration: attrs["duration"] ? parseFloat(attrs["duration"]) : 2.5,
-      ease: attrs["ease"] || "power2.inOut",
-      width: attrs["width"] ? parseInt(attrs["width"]) : 300,
-      height: attrs["height"] ? parseInt(attrs["height"]) : 300,
-      fill: attrs["fill"] || "#00d4ff",
-      autoplay: attrs["autoplay"] !== "false",
-      loop: attrs["loop"] !== "false",
-      direction: (attrs["direction"] as SpriteMorphConfig["direction"]) || "forward",
-      startIndex: attrs["start-index"] ? parseInt(attrs["start-index"]) : 0,
-      morphType: attrs["type"] === "rotational" ? "rotational" : "linear",
-      hold: attrs["hold"] ? parseFloat(attrs["hold"]) : 0.6,
-      speed: attrs["speed"] ? parseFloat(attrs["speed"]) : 1,
-      paused: attrs["paused"] === "true",
+      icons: attrs.icons || undefined,
+      duration: attrs.duration ? parseFloat(attrs.duration) : 2.5,
+      ease: attrs.ease || "power2.inOut",
+      width: attrs.width ? parseInt(attrs.width, 10) : 300,
+      height: attrs.height ? parseInt(attrs.height, 10) : 300,
+      fill: attrs.fill || "#00d4ff",
+      autoplay: attrs.autoplay !== "false",
+      loop: attrs.loop !== "false",
+      direction: (attrs.direction as SpriteMorphConfig["direction"]) || "forward",
+      startIndex: attrs["start-index"] ? parseInt(attrs["start-index"], 10) : 0,
+      morphType: attrs.type === "rotational" ? "rotational" : "linear",
+      hold: attrs.hold ? parseFloat(attrs.hold) : 0.6,
+      speed: attrs.speed ? parseFloat(attrs.speed) : 1,
+      paused: attrs.paused === "true",
       // boolean attribute: <svg-morph controls> or controls="true"
-      controls: attrs["controls"] != null && attrs["controls"] !== "false",
-      debug: attrs["debug"] != null && attrs["debug"] !== "false",
+      controls: attrs.controls != null && attrs.controls !== "false",
+      debug: attrs.debug != null && attrs.debug !== "false",
     };
 
     this.applyControls();
@@ -360,7 +360,7 @@ class SpriteMorphElement extends HTMLElement {
       </div>
     `;
 
-    this.svg = this.shadow.querySelector(".svg-morph-svg")!;
+    this.svg = this.requireElement<SVGSVGElement>(".svg-morph-svg");
     this.label = null;
 
     // Create morph path
@@ -372,8 +372,17 @@ class SpriteMorphElement extends HTMLElement {
     this.svg.setAttribute("height", String(this.config.height));
   }
 
+  /** Looks up an element of the shadow template, which is part of this class. */
+  private requireElement<T extends Element>(selector: string): T {
+    const element = this.shadow.querySelector<T>(selector);
+    if (!element) {
+      throw new Error(`svg-morph: template element ${selector} is missing`);
+    }
+    return element;
+  }
+
   private applyControls() {
-    const container = this.shadow.querySelector<HTMLElement>(".svg-morph-container")!;
+    const container = this.requireElement<HTMLElement>(".svg-morph-container");
     let controls = this.shadow.querySelector<HTMLElement>(".svg-morph-controls");
 
     const enabled = this.config.controls ?? false;
@@ -401,15 +410,15 @@ class SpriteMorphElement extends HTMLElement {
   }
 
   private applyDebug() {
-    const container = this.shadow.querySelector<HTMLElement>(".svg-morph-container")!;
-    let label = this.shadow.querySelector<HTMLElement>(".svg-morph-label");
+    const container = this.requireElement<HTMLElement>(".svg-morph-container");
+    let label = this.shadow.querySelector<HTMLDivElement>(".svg-morph-label");
 
     const enabled = this.config.debug ?? false;
     if (enabled && !label) {
       label = document.createElement("div");
       label.className = "svg-morph-label";
       container.appendChild(label);
-      this.label = container.querySelector<HTMLDivElement>(".svg-morph-label")!;
+      this.label = label;
     } else if (!enabled && label) {
       label.remove();
       this.label = null;
@@ -442,7 +451,8 @@ class SpriteMorphElement extends HTMLElement {
   }
 
   private morphToIndex(targetIndex: number) {
-    if (!this.morphPath || this.icons.length < 2) return;
+    const path = this.morphPath;
+    if (!path || this.icons.length < 2) return;
 
     const toIndex = targetIndex;
     const toPath = this.icons[toIndex].path;
@@ -450,7 +460,7 @@ class SpriteMorphElement extends HTMLElement {
     // MorphSVGPlugin tweens the path element's d attribute directly from its
     // current state to the target shape (type 'linear' = simple matching,
     // 'rotational' = tries to rotate points for a more organic feel).
-    this.animationId = gsap.to(this.morphPath, {
+    this.animationId = gsap.to(path, {
       morphSVG: {
         shape: toPath,
         type: this.config.morphType,
@@ -458,10 +468,12 @@ class SpriteMorphElement extends HTMLElement {
       duration: this.config.duration,
       ease: this.config.ease,
       // speed is applied as a timeScale so changing it mid-flight works
-      onStart: () => this.animationId!.timeScale(Math.max(0.01, this.config.speed ?? 1)),
+      onStart: () => {
+        this.animationId?.timeScale(Math.max(0.01, this.config.speed ?? 1));
+      },
       onComplete: () => {
         this.currentIndex = toIndex;
-        this.morphPath!.setAttribute("d", toPath);
+        path.setAttribute("d", toPath);
         this.updateLabel();
         this.animationId = null;
 

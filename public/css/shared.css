@@ -42,7 +42,6 @@ body {
   z-index: 20;
   /* Glassy: mostly transparent, blurring and saturating what passes behind
      it, so the pattern colors glow through the bar. */
-  background: rgba(10, 10, 18, 0.37);
   background: linear-gradient(180deg, rgb(10 10 18 / 37%), rgb(10 10 18 / 0%));
   border-bottom: 1px solid var(--border);
   border-bottom-color: color-mix(in srgb, var(--pattern-accent, #00d4ff) 24%, var(--border));

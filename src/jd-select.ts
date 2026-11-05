@@ -605,7 +605,7 @@ class JDSelectElement extends HTMLElement {
       );
     });
     this.valueText.textContent = index < 0 ? "" : labelOf(this.options[index]);
-    this.active = index < 0 ? 0 : index;
+    this.active = Math.max(0, index);
     this.markActive();
     this.reflect(this.value);
     this.internals.setFormValue(this.value);

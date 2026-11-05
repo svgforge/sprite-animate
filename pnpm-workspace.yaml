@@ -8,4 +8,4 @@ allowBuilds:
   core-js: true
 
 minimumReleaseAgeExclude:
-  - '@svgforge/svgforge@3.0.0-beta.1'
+  - "@svgforge/svgforge@3.0.0-beta.1"
