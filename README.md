@@ -27,12 +27,7 @@ formats the project.
 A single morph instance:
 
 ```html
-<svg-morph
-  sprite-href="/ico.svg"
-  icons="arrow_forward,check"
-  width="200"
-  height="200"
-></svg-morph>
+<svg-morph sprite-href="/ico.svg" icons="arrow_forward,check" width="200" height="200"></svg-morph>
 ```
 
 With no attributes other than `sprite-href`, all symbols of the sprite are
@@ -40,24 +35,24 @@ loaded and morphed through automatically.
 
 ### Attributes
 
-| Attribute          | Default      | Description                                                                    |
-| ------------------ | ------------ | ------------------------------------------------------------------------------ |
-| `sprite-href`      | — (required) | URL to the SVG sprite (a `<symbol id="…">` file).                              |
-| `icons`            | *(all)*      | Comma-separated symbol IDs. Without the attribute, all symbols are used.       |
-| `duration`         | `2.5`        | Duration of a single morph in seconds.                                         |
-| `ease`             | `power2.inOut` | GSAP easing, e.g. `elastic.out(1, 0.5)` or `sine.inOut`.                     |
-| `speed`            | `1`          | **Speed multiplier**: `0.5` = half speed, `2` = double speed.                  |
-| `type`             | `linear`     | Morph style from MorphSVGPlugin: `linear` or `rotational`.                     |
-| `hold`             | `0.6`        | Pause in seconds the target shape stays visible before the next morph starts. Especially useful with only 2 icons for a calm look. |
-| `direction`        | `forward`    | `forward`, `reverse` or `alternate`.                                           |
-| `autoplay`         | `true`       | Start the animation automatically after loading.                               |
-| `loop`             | `true`       | Keep looping indefinitely.                                                     |
-| `controls`         | *(off)*      | Show the built-in ▶ ⏸ ⏮ ⏭ buttons (`controls` or `controls="true"`). Hidden by default. |
-| `debug`            | *(off)*      | Show the current icon label (e.g. `arrow_forward → check`) below the morph. Hidden by default. |
-| `paused`           | `false`      | Live pause/play: `paused="true"` pauses, `paused="false"` resumes.             |
-| `start-index`      | `0`          | Start icon (0-based, used as the starting point when playing).                 |
-| `fill`             | `#00d4ff`    | Fill color of the morph path.                                                  |
-| `width`/`height`   | `300`        | Display size of the SVG.                                                       |
+| Attribute        | Default        | Description                                                                                                                        |
+| ---------------- | -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `sprite-href`    | — (required)   | URL to the SVG sprite (a `<symbol id="…">` file).                                                                                  |
+| `icons`          | _(all)_        | Comma-separated symbol IDs. Without the attribute, all symbols are used.                                                           |
+| `duration`       | `2.5`          | Duration of a single morph in seconds.                                                                                             |
+| `ease`           | `power2.inOut` | GSAP easing, e.g. `elastic.out(1, 0.5)` or `sine.inOut`.                                                                           |
+| `speed`          | `1`            | **Speed multiplier**: `0.5` = half speed, `2` = double speed.                                                                      |
+| `type`           | `linear`       | Morph style from MorphSVGPlugin: `linear` or `rotational`.                                                                         |
+| `hold`           | `0.6`          | Pause in seconds the target shape stays visible before the next morph starts. Especially useful with only 2 icons for a calm look. |
+| `direction`      | `forward`      | `forward`, `reverse` or `alternate`.                                                                                               |
+| `autoplay`       | `true`         | Start the animation automatically after loading.                                                                                   |
+| `loop`           | `true`         | Keep looping indefinitely.                                                                                                         |
+| `controls`       | _(off)_        | Show the built-in ▶ ⏸ ⏮ ⏭ buttons (`controls` or `controls="true"`). Hidden by default.                                            |
+| `debug`          | _(off)_        | Show the current icon label (e.g. `arrow_forward → check`) below the morph. Hidden by default.                                     |
+| `paused`         | `false`        | Live pause/play: `paused="true"` pauses, `paused="false"` resumes.                                                                 |
+| `start-index`    | `0`            | Start icon (0-based, used as the starting point when playing).                                                                     |
+| `fill`           | `#00d4ff`      | Fill color of the morph path.                                                                                                      |
+| `width`/`height` | `300`          | Display size of the SVG.                                                                                                           |
 
 **All attributes work live:** changes via `setAttribute()` are applied to the
 running tween immediately (e.g. `speed`, `fill`, `paused`, `duration`).
@@ -71,14 +66,14 @@ the morph with `controls` (or `controls="true"`).
 
 ### Methods (JS API)
 
-| Method                       | Description                                           |
-| ---------------------------- | ----------------------------------------------------- |
-| `play()`                     | Start/resume the animation                            |
-| `pause()`                    | Pause the animation                                   |
-| `next()` / `prev()`          | Morph one icon forward/backward (pauses while doing so) |
-| `goTo(index \| id)`          | Morph directly to an icon                             |
-| `getCurrentIcon()`           | Current icon ID (or `null`)                           |
-| `getIcons()`                 | List of all loaded icon IDs                           |
+| Method              | Description                                             |
+| ------------------- | ------------------------------------------------------- |
+| `play()`            | Start/resume the animation                              |
+| `pause()`           | Pause the animation                                     |
+| `next()` / `prev()` | Morph one icon forward/backward (pauses while doing so) |
+| `goTo(index \| id)` | Morph directly to an icon                               |
+| `getCurrentIcon()`  | Current icon ID (or `null`)                             |
+| `getIcons()`        | List of all loaded icon IDs                             |
 
 Access by ID:
 

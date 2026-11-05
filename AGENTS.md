@@ -25,15 +25,15 @@ Component** (`<svg-morph>`), built with **GSAP MorphSVGPlugin** + **RSBuild**
 
 ## Commands
 
-| Command                  | Purpose                                                      |
-| ------------------------ | ------------------------------------------------------------ |
-| `pnpm run dev`            | Runs `build:lib`, then starts the RSBuild dev server (default :3000; port often taken → 3001/3002 …, read from the log) |
-| `pnpm run build`          | Demo entries + release bundle (`dist/lib/svg-morph.js`)      |
-| `pnpm run build:lib`      | Standalone release bundle only (UMD, minified)               |
-| `pnpm run preview`        | Serve the build locally                                      |
-| `pnpm run lint` / `pnpm run lint:fix` | Biome check / auto-fix                            |
-| `pnpm run format`         | Biome format                                                 |
-| `npx tsc --noEmit`       | Type-check (before/after changes to `src/`)                  |
+| Command                               | Purpose                                                                                                                 |
+| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `pnpm run dev`                        | Runs `build:lib`, then starts the RSBuild dev server (default :3000; port often taken → 3001/3002 …, read from the log) |
+| `pnpm run build`                      | Demo entries + release bundle (`dist/lib/svg-morph.js`)                                                                 |
+| `pnpm run build:lib`                  | Standalone release bundle only (UMD, minified)                                                                          |
+| `pnpm run preview`                    | Serve the build locally                                                                                                 |
+| `pnpm run lint` / `pnpm run lint:fix` | Biome check / auto-fix                                                                                                  |
+| `pnpm run format`                     | Biome format                                                                                                            |
+| `npx tsc --noEmit`                    | Type-check (before/after changes to `src/`)                                                                             |
 
 ## Architecture / structure
 
